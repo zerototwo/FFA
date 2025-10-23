@@ -1,0 +1,95 @@
+spring:
+  application:
+    name: FFA
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ffa_platform
+    username: admin
+    password: 123456
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+# MyBatis-Plus Configuration
+mybatis-plus:
+  # Mapper XML文件位置
+  mapper-locations: classpath*:/mapper/**/*.xml
+  # 实体类包路径
+  type-aliases-package: com.isep.ffa.entity
+  # 全局配置
+  global-config:
+    # 数据库字段驼峰下划线转换
+    db-config:
+      # 主键类型
+      id-type: auto
+      # 逻辑删除字段
+      logic-delete-field: isDeleted
+      # 逻辑删除值
+      logic-delete-value: 1
+      # 逻辑未删除值
+      logic-not-delete-value: 0
+      # 字段策略
+      field-strategy: not_null
+      # 表名前缀
+      table-prefix: ""
+    # 是否开启SQL性能分析
+    banner: false
+  # 原生配置
+  configuration:
+    # 是否开启自动驼峰命名规则映射
+    map-underscore-to-camel-case: true
+    # 开启Mybatis二级缓存
+    cache-enabled: false
+    # 打印SQL语句
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  
+  # Security Configuration
+  security:
+    user:
+      name: admin
+      password: admin
+
+# JWT Configuration
+app:
+  jwt:
+    secret: mySecretKey
+    expiration: 86400000  # 24 hours in milliseconds
+    refresh-expiration: 604800000  # 7 days in milliseconds
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /ffaAPI
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  show-actuator: true
+
+# Logging Configuration
+logging:
+  level:
+    com.isep.ffa: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# JWT Configuration
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+  expiration: 86400000 # 24 hours in milliseconds
