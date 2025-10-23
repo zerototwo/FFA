@@ -10,7 +10,7 @@ import java.util.List;
  * 警报Mapper接口
  */
 @Mapper
-public interface AlertMapper extends BaseMapper<Alert> {
+public interface AlertMapper extends CustomBaseMapper<Alert> {
 
   /**
    * 根据接收者ID查询警报列表

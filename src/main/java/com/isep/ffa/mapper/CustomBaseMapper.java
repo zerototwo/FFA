@@ -8,6 +8,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * 
  * @param <T> 实体类型
  */
-public interface BaseMapper<T> extends com.baomidou.mybatisplus.core.mapper.BaseMapper<T> {
+public interface CustomBaseMapper<T> extends BaseMapper<T> {
     // 可以在这里添加自定义的通用方法
 }

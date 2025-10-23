@@ -115,13 +115,10 @@ public class MybatisPlusUtils {
   public static <T> Page<T> buildPage(int page, int size, String sortBy, String sortDir) {
     Page<T> pageObj = new Page<>(page, size);
 
+    // 暂时不支持排序
+    // TODO: 实现排序功能
     if (sortBy != null && !sortBy.trim().isEmpty()) {
-      boolean isAsc = "asc".equalsIgnoreCase(sortDir);
-      if (isAsc) {
-        pageObj.addOrder(com.baomidou.mybatisplus.core.conditions.query.QueryWrapper.asc(sortBy));
-      } else {
-        pageObj.addOrder(com.baomidou.mybatisplus.core.conditions.query.QueryWrapper.desc(sortBy));
-      }
+      // 暂时忽略排序
     }
 
     return pageObj;

@@ -66,7 +66,7 @@ public class AuthService {
       return BaseResponse.success("Login successful", response);
 
     } catch (Exception e) {
-      return BaseResponse.error("Authentication failed", e.getMessage(), 401);
+      return BaseResponse.error("Authentication failed: " + e.getMessage(), 401);
     }
   }
 
@@ -78,7 +78,7 @@ public class AuthService {
       // Check if user already exists
       Optional<Person> existingUser = personService.findByLoginOrEmail(person.getLogin());
       if (existingUser.isPresent()) {
-        return BaseResponse.error("User already exists", "Login or email already registered", 400);
+        return BaseResponse.error("User already exists: Login or email already registered", 400);
       }
 
       // Encode password
@@ -99,7 +99,7 @@ public class AuthService {
       }
 
     } catch (Exception e) {
-      return BaseResponse.error("Registration failed", e.getMessage(), 500);
+      return BaseResponse.error("Registration failed: " + e.getMessage(), 500);
     }
   }
 
@@ -123,10 +123,10 @@ public class AuthService {
 
         return BaseResponse.success("Token refreshed successfully", response);
       } else {
-        return BaseResponse.error("Invalid refresh token", "Refresh token is invalid or expired", 401);
+        return BaseResponse.error("Invalid refresh token: Refresh token is invalid or expired", 401);
       }
     } catch (Exception e) {
-      return BaseResponse.error("Token refresh failed", e.getMessage(), 500);
+      return BaseResponse.error("Token refresh failed: " + e.getMessage(), 500);
     }
   }
 
@@ -143,10 +143,10 @@ public class AuthService {
             .getPrincipal();
         return BaseResponse.success("Current user retrieved", userPrincipal.getPerson());
       } else {
-        return BaseResponse.error("No authenticated user", "User not authenticated", 401);
+        return BaseResponse.error("No authenticated user: User not authenticated", 401);
       }
     } catch (Exception e) {
-      return BaseResponse.error("Failed to get current user", e.getMessage(), 500);
+      return BaseResponse.error("Failed to get current user: " + e.getMessage(), 500);
     }
   }
 
@@ -158,7 +158,7 @@ public class AuthService {
       SecurityContextHolder.clearContext();
       return BaseResponse.success("Logout successful", true);
     } catch (Exception e) {
-      return BaseResponse.error("Logout failed", e.getMessage(), 500);
+      return BaseResponse.error("Logout failed: " + e.getMessage(), 500);
     }
   }
 }

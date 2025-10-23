@@ -43,13 +43,13 @@ public class CodeGenerator {
               .dateType(DateType.TIME_PACK) // 时间策略
               .commentDate("yyyy-MM-dd HH:mm:ss"); // 注释日期
         })
-        // 数据源配置
-        .dataSourceConfig(builder -> {
-          builder.url(url)
-              .username(username)
-              .password(password)
-              .driverName("org.postgresql.Driver");
-        })
+        // 数据源配置 - 暂时注释掉，需要根据MyBatis-Plus版本调整
+        // .dataSourceConfig(builder -> {
+        // builder.setUrl(url)
+        // .setUsername(username)
+        // .setPassword(password)
+        // .setDriverName("org.postgresql.Driver");
+        // })
         // 包配置
         .packageConfig(builder -> {
           builder.parent(parentPackage) // 设置父包名

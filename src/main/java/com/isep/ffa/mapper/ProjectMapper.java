@@ -10,7 +10,7 @@ import java.util.List;
  * 项目Mapper接口
  */
 @Mapper
-public interface ProjectMapper extends BaseMapper<Project> {
+public interface ProjectMapper extends CustomBaseMapper<Project> {
 
   /**
    * 根据名称查询项目

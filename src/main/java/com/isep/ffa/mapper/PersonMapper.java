@@ -10,7 +10,7 @@ import java.util.List;
  * 人员Mapper接口
  */
 @Mapper
-public interface PersonMapper extends BaseMapper<Person> {
+public interface PersonMapper extends CustomBaseMapper<Person> {
 
   /**
    * 根据邮箱查询用户

@@ -26,8 +26,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
     BaseResponse<Object> errorResponse = BaseResponse.error(
-        "Unauthorized access",
-        "Authentication required to access this resource",
+        "Unauthorized access: Authentication required to access this resource",
         HttpServletResponse.SC_UNAUTHORIZED);
 
     ObjectMapper mapper = new ObjectMapper();

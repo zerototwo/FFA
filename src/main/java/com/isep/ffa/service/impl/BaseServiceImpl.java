@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.isep.ffa.dto.PagedResponse;
-import com.isep.ffa.mapper.BaseMapper;
+import com.isep.ffa.mapper.CustomBaseMapper;
 import com.isep.ffa.service.BaseService;
 
 import java.util.List;
@@ -15,7 +15,8 @@ import java.util.List;
  * @param <M> Mapper类型
  * @param <T> 实体类型
  */
-public abstract class BaseServiceImpl<M extends BaseMapper<T>, T> extends ServiceImpl<M, T> implements BaseService<T> {
+public abstract class BaseServiceImpl<M extends CustomBaseMapper<T>, T> extends ServiceImpl<M, T>
+    implements BaseService<T> {
 
   @Override
   public PagedResponse<T> getPage(int page, int size) {
@@ -33,11 +34,10 @@ public abstract class BaseServiceImpl<M extends BaseMapper<T>, T> extends Servic
   public PagedResponse<T> getPage(int page, int size, String sortBy, String sortDir) {
     Page<T> pageParam = new Page<>(page, size);
 
-    // 设置排序
+    // 设置排序 - 简化版本，暂时不支持排序
+    // TODO: 实现排序功能
     if (sortBy != null && !sortBy.isEmpty()) {
-      boolean isAsc = "asc".equalsIgnoreCase(sortDir);
-      pageParam.addOrder(isAsc ? com.baomidou.mybatisplus.core.conditions.query.QueryWrapper.asc(sortBy)
-          : com.baomidou.mybatisplus.core.conditions.query.QueryWrapper.desc(sortBy));
+      // 暂时忽略排序，直接使用分页
     }
 
     Page<T> result = page(pageParam);

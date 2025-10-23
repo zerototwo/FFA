@@ -10,7 +10,7 @@ import java.util.List;
  * 申请Mapper接口
  */
 @Mapper
-public interface ApplicationMapper extends BaseMapper<Application> {
+public interface ApplicationMapper extends CustomBaseMapper<Application> {
 
   /**
    * 根据项目ID查询申请列表

@@ -2,6 +2,8 @@ package com.isep.ffa.controller;
 
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
+import com.isep.ffa.dto.CountryRequest;
+import com.isep.ffa.dto.CountryResponse;
 import com.isep.ffa.entity.*;
 import com.isep.ffa.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -124,10 +126,10 @@ public class AdminController {
   @GetMapping("/countries")
   @Operation(summary = "Get all countries", description = "Retrieve paginated list of all countries")
   public BaseResponse<PagedResponse<Country>> getAllCountries(
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Page number") @RequestParam(defaultValue = "1") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    PagedResponse<Country> pagedResponse = countryService.getPage(page, size);
+    return BaseResponse.success("Countries retrieved successfully", pagedResponse);
   }
 
   /**
@@ -135,9 +137,14 @@ public class AdminController {
    */
   @PostMapping("/countries")
   @Operation(summary = "Create country", description = "Create a new country")
-  public BaseResponse<Country> createCountry(@RequestBody Country country) {
-    // TODO: Implement business logic
-    return null;
+  public BaseResponse<Country> createCountry(@RequestBody CountryRequest countryRequest) {
+    // Convert DTO to Entity
+    Country country = new Country();
+    country.setName(countryRequest.getName());
+    country.setPhoneNumberIndicator(countryRequest.getPhoneNumberIndicator());
+    country.setContinentId(countryRequest.getContinentId());
+
+    return countryService.createCountry(country);
   }
 
   /**
@@ -147,9 +154,15 @@ public class AdminController {
   @Operation(summary = "Update country", description = "Update country information")
   public BaseResponse<Country> updateCountry(
       @Parameter(description = "Country ID") @PathVariable Long id,
-      @RequestBody Country country) {
-    // TODO: Implement business logic
-    return null;
+      @RequestBody CountryRequest countryRequest) {
+    // Convert DTO to Entity
+    Country country = new Country();
+    country.setId(id);
+    country.setName(countryRequest.getName());
+    country.setPhoneNumberIndicator(countryRequest.getPhoneNumberIndicator());
+    country.setContinentId(countryRequest.getContinentId());
+
+    return countryService.updateCountry(country);
   }
 
   /**
@@ -159,8 +172,7 @@ public class AdminController {
   @Operation(summary = "Delete country", description = "Delete country by ID")
   public BaseResponse<Boolean> deleteCountry(
       @Parameter(description = "Country ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    return countryService.deleteCountry(id);
   }
 
   // ==================== EMBASSY MANAGEMENT ====================

@@ -11,7 +11,7 @@ import java.time.LocalDate;
  * 自动填充创建时间、修改时间等字段
  */
 @Component
-public class MetaObjectHandler implements com.baomidou.mybatisplus.core.handlers.MetaObjectHandler {
+public class CustomMetaObjectHandler implements com.baomidou.mybatisplus.core.handlers.MetaObjectHandler {
 
   @Override
   public void insertFill(MetaObject metaObject) {

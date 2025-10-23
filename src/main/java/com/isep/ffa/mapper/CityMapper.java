@@ -10,7 +10,7 @@ import java.util.List;
  * 城市Mapper接口
  */
 @Mapper
-public interface CityMapper extends BaseMapper<City> {
+public interface CityMapper extends CustomBaseMapper<City> {
 
   /**
    * 根据名称查询城市

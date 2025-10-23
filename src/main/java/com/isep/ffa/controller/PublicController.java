@@ -43,8 +43,7 @@ public class PublicController {
   @GetMapping("/countries")
   @Operation(summary = "Get all countries", description = "Retrieve list of all countries")
   public BaseResponse<List<Country>> getAllCountries() {
-    // TODO: Implement business logic
-    return null;
+    return countryService.getCountriesWithEmbassies();
   }
 
   /**
@@ -54,8 +53,9 @@ public class PublicController {
   @Operation(summary = "Get country by ID", description = "Retrieve country information by ID")
   public BaseResponse<Country> getCountryById(
       @Parameter(description = "Country ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    return countryService.getById(id) != null
+        ? BaseResponse.success("Country found", countryService.getById(id))
+        : BaseResponse.error("Country not found with ID: " + id, 404);
   }
 
   /**
@@ -63,10 +63,33 @@ public class PublicController {
    */
   @GetMapping("/countries/search")
   @Operation(summary = "Search countries", description = "Search countries by keyword")
-  public BaseResponse<List<Country>> searchCountries(
-      @Parameter(description = "Search keyword") @RequestParam String keyword) {
-    // TODO: Implement business logic
-    return null;
+  public BaseResponse<PagedResponse<Country>> searchCountries(
+      @Parameter(description = "Search keyword") @RequestParam String keyword,
+      @Parameter(description = "Page number") @RequestParam(defaultValue = "1") int page,
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+    return countryService.searchCountries(keyword, page, size);
+  }
+
+  /**
+   * Get countries by continent ID
+   */
+  @GetMapping("/countries/continent/{continentId}")
+  @Operation(summary = "Get countries by continent", description = "Retrieve countries by continent ID")
+  public BaseResponse<List<Country>> getCountriesByContinent(
+      @Parameter(description = "Continent ID") @PathVariable Long continentId) {
+    return countryService.findByContinentId(continentId);
+  }
+
+  /**
+   * Get paginated countries by continent
+   */
+  @GetMapping("/countries/continent/{continentId}/paginated")
+  @Operation(summary = "Get paginated countries by continent", description = "Retrieve paginated countries by continent ID")
+  public BaseResponse<PagedResponse<Country>> getPaginatedCountriesByContinent(
+      @Parameter(description = "Continent ID") @PathVariable Long continentId,
+      @Parameter(description = "Page number") @RequestParam(defaultValue = "1") int page,
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+    return countryService.getCountriesByContinent(continentId, page, size);
   }
 
   // ==================== EMBASSY INFORMATION ====================

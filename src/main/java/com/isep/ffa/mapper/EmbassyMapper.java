@@ -10,7 +10,7 @@ import java.util.List;
  * 大使馆Mapper接口
  */
 @Mapper
-public interface EmbassyMapper extends BaseMapper<Embassy> {
+public interface EmbassyMapper extends CustomBaseMapper<Embassy> {
 
   /**
    * 根据所属国家查询大使馆列表

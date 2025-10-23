@@ -10,7 +10,7 @@ import java.util.List;
  * 国家Mapper接口
  */
 @Mapper
-public interface CountryMapper extends BaseMapper<Country> {
+public interface CountryMapper extends CustomBaseMapper<Country> {
 
   /**
    * 根据名称查询国家

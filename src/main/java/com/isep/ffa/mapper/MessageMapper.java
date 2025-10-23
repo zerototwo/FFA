@@ -10,7 +10,7 @@ import java.util.List;
  * 消息Mapper接口
  */
 @Mapper
-public interface MessageMapper extends BaseMapper<Message> {
+public interface MessageMapper extends CustomBaseMapper<Message> {
 
   /**
    * 根据发送者ID查询消息列表
