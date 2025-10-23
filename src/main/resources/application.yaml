@@ -35,9 +35,9 @@ mybatis-plus:
       # 逻辑删除字段
       logic-delete-field: isDeleted
       # 逻辑删除值
-      logic-delete-value: 1
+      logic-delete-value: true
       # 逻辑未删除值
-      logic-not-delete-value: 0
+      logic-not-delete-value: false
       # 字段策略
       field-strategy: not_null
       # 表名前缀
@@ -75,10 +75,10 @@ server:
 # Swagger/OpenAPI Configuration
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    operationsSorter: method
+    operations-sorter: method
   show-actuator: true
 
 # Logging Configuration

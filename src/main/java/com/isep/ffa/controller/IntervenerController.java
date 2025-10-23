@@ -18,7 +18,7 @@ import java.util.List;
  * Provides REST API endpoints for intervener operations
  * Base path: /ffaAPI/intervener
  */
-@RestController
+// @RestController
 @RequestMapping("/ffaAPI/intervener")
 @Tag(name = "Intervener API", description = "Intervener operations for FFA platform")
 public class IntervenerController {

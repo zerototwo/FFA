@@ -10,7 +10,7 @@ import java.time.LocalDate;
  * MyBatis-Plus自动填充处理器
  * 自动填充创建时间、修改时间等字段
  */
-@Component
+// @Component
 public class CustomMetaObjectHandler implements com.baomidou.mybatisplus.core.handlers.MetaObjectHandler {
 
   @Override

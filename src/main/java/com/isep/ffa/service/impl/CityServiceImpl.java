@@ -14,7 +14,7 @@ import java.util.List;
  * City Service Implementation
  * Implements business logic for city management
  */
-@Service
+//@Service
 public class CityServiceImpl extends BaseServiceImpl<CityMapper, City> implements CityService {
 
   @Autowired

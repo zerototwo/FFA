@@ -14,7 +14,7 @@ import java.util.List;
  * Role Service Implementation
  * Implements business logic for role management
  */
-@Service
+//@Service
 public class RoleServiceImpl extends BaseServiceImpl<RoleMapper, Role> implements RoleService {
 
   @Autowired

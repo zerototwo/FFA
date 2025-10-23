@@ -15,7 +15,7 @@ import java.util.List;
  * Project Service Implementation
  * Implements business logic for project management
  */
-@Service
+//@Service
 public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> implements ProjectService {
 
   @Autowired

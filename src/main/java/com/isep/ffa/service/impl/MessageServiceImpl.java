@@ -14,7 +14,7 @@ import java.util.List;
  * Message Service Implementation
  * Implements business logic for message management
  */
-@Service
+//@Service
 public class MessageServiceImpl extends BaseServiceImpl<MessageMapper, Message> implements MessageService {
 
   @Autowired

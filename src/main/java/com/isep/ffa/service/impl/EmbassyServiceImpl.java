@@ -14,7 +14,7 @@ import java.util.List;
  * Embassy Service Implementation
  * Implements business logic for embassy management
  */
-@Service
+//@Service
 public class EmbassyServiceImpl extends BaseServiceImpl<EmbassyMapper, Embassy> implements EmbassyService {
 
   @Autowired

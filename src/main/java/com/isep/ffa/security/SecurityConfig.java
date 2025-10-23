@@ -1,17 +1,11 @@
 package com.isep.ffa.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,78 +18,68 @@ import java.util.Arrays;
  */
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-
-  @Autowired
-  private CustomUserDetailsService customUserDetailsService;
-
-  @Autowired
-  private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-  @Autowired
-  private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.cors().and().csrf().disable()
-        .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
-        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-        .authorizeRequests()
-        // Public endpoints
-        .antMatchers("/ffaAPI/public/**").permitAll()
-        .antMatchers("/ffaAPI/auth/login").permitAll()
-        .antMatchers("/ffaAPI/auth/register").permitAll()
-        .antMatchers("/ffaAPI/auth/forgot-password").permitAll()
-        .antMatchers("/ffaAPI/auth/reset-password").permitAll()
-        .antMatchers("/ffaAPI/auth/verify-email").permitAll()
-        .antMatchers("/ffaAPI/auth/resend-verification").permitAll()
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(authz -> authz
+            // 允许所有Swagger相关端点
+            .requestMatchers("/ffaAPI/swagger-ui/**").permitAll()
+            .requestMatchers("/ffaAPI/v3/api-docs/**").permitAll()
+            .requestMatchers("/ffaAPI/swagger-resources/**").permitAll()
+            .requestMatchers("/ffaAPI/webjars/**").permitAll()
+            .requestMatchers("/ffaAPI/swagger-ui.html").permitAll()
 
-        // Swagger endpoints
-        .antMatchers("/swagger-ui/**").permitAll()
-        .antMatchers("/v3/api-docs/**").permitAll()
-        .antMatchers("/swagger-resources/**").permitAll()
-        .antMatchers("/webjars/**").permitAll()
-
-        // Health check endpoints
-        .antMatchers("/ffaAPI/health").permitAll()
-        .antMatchers("/ffaAPI/info").permitAll()
-        .antMatchers("/ffaAPI/endpoints").permitAll()
-        .antMatchers("/ffaAPI/docs").permitAll()
-
-        // Admin endpoints - require ADMIN role
-        .antMatchers("/ffaAPI/admin/**").hasRole("ADMIN")
-
-        // Intervener endpoints - require INTERVENER role
-        .antMatchers("/ffaAPI/intervener/**").hasRole("INTERVENER")
-
-        // User endpoints - require USER role
-        .antMatchers("/ffaAPI/user/**").hasAnyRole("USER", "INTERVENER", "ADMIN")
-
-        // Auth endpoints - require authentication
-        .antMatchers("/ffaAPI/auth/**").authenticated()
-
-        // All other requests need authentication
-        .anyRequest().authenticated();
-
-    // Add JWT filter
-    http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            // 允许所有其他请求（临时）
+            .anyRequest().permitAll());
 
     return http.build();
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-    return authConfig.getAuthenticationManager();
-  }
-
-  @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList("*"));
+
+    // 允许的源
+    configuration.setAllowedOriginPatterns(Arrays.asList(
+        "*",
+        "http://localhost:*",
+        "https://localhost:*",
+        "http://127.0.0.1:*",
+        "https://127.0.0.1:*",
+        "https://ffa-api.isep.fr",
+        "http://ffa-api.isep.fr"));
+
+    // 允许的HTTP方法
+    configuration.setAllowedMethods(Arrays.asList(
+        "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
+
+    // 允许的请求头
+    configuration.setAllowedHeaders(Arrays.asList(
+        "*",
+        "Authorization",
+        "Content-Type",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers"));
+
+    // 允许的响应头
+    configuration.setExposedHeaders(Arrays.asList(
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Credentials",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Methods"));
+
+    // 允许发送凭证
     configuration.setAllowCredentials(true);
+
+    // 预检请求的缓存时间（秒）
+    configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);

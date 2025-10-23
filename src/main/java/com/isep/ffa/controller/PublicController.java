@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,14 +27,14 @@ public class PublicController {
   @Autowired
   private CountryService countryService;
 
-  @Autowired
-  private EmbassyService embassyService;
+  // @Autowired
+  // private EmbassyService embassyService;
 
-  @Autowired
-  private ProjectService projectService;
+  // @Autowired
+  // private ProjectService projectService;
 
-  @Autowired
-  private CityService cityService;
+  // @Autowired
+  // private CityService cityService;
 
   // ==================== COUNTRY INFORMATION ====================
 
@@ -53,8 +54,9 @@ public class PublicController {
   @Operation(summary = "Get country by ID", description = "Retrieve country information by ID")
   public BaseResponse<Country> getCountryById(
       @Parameter(description = "Country ID") @PathVariable Long id) {
-    return countryService.getById(id) != null
-        ? BaseResponse.success("Country found", countryService.getById(id))
+    Country country = countryService.getById(id);
+    return country != null
+        ? BaseResponse.success("Country found", country)
         : BaseResponse.error("Country not found with ID: " + id, 404);
   }
 

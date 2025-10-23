@@ -19,7 +19,7 @@ import java.util.Optional;
  * Authentication Service
  * Handles authentication and authorization logic
  */
-@Service
+// @Service
 public class AuthService {
 
   @Autowired

@@ -14,7 +14,7 @@ import java.util.List;
  * Alert Service Implementation
  * Implements business logic for alert management
  */
-@Service
+//@Service
 public class AlertServiceImpl extends BaseServiceImpl<AlertMapper, Alert> implements AlertService {
 
   @Autowired

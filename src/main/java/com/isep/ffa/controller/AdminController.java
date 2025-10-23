@@ -21,7 +21,7 @@ import java.util.List;
  * Provides REST API endpoints for admin operations
  * Base path: /ffaAPI/admin
  */
-@RestController
+// @RestController
 @RequestMapping("/ffaAPI/admin")
 @Tag(name = "Admin API", description = "Administrative operations for FFA platform")
 public class AdminController {

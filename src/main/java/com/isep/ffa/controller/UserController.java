@@ -18,7 +18,7 @@ import java.util.List;
  * Provides REST API endpoints for user operations
  * Base path: /ffaAPI/user
  */
-@RestController
+// @RestController
 @RequestMapping("/ffaAPI/user")
 @Tag(name = "User API", description = "User operations for FFA platform")
 public class UserController {

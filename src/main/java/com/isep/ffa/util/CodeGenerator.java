@@ -38,7 +38,7 @@ public class CodeGenerator {
         .globalConfig(builder -> {
           builder.author("FFA Development Team") // 设置作者
               .enableSwagger() // 开启swagger模式
-              .fileOverride() // 覆盖已生成文件
+              // .fileOverride(true) // 覆盖已生成文件 - 暂时注释掉
               .outputDir(projectPath + "/src/main/java") // 指定输出目录
               .dateType(DateType.TIME_PACK) // 时间策略
               .commentDate("yyyy-MM-dd HH:mm:ss"); // 注释日期

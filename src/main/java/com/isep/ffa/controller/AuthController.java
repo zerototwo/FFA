@@ -16,7 +16,7 @@ import java.util.Map;
  * Provides REST API endpoints for authentication operations
  * Base path: /ffaAPI/auth
  */
-@RestController
+// @RestController
 @RequestMapping("/ffaAPI/auth")
 @Tag(name = "Authentication API", description = "Authentication and authorization operations")
 public class AuthController {

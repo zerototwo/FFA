@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 分页配置类
  */
-@Configuration
+// @Configuration
 public class PageConfig {
 
   /**

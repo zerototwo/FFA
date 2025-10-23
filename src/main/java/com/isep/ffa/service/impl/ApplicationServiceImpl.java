@@ -15,7 +15,7 @@ import java.util.List;
  * Application Service Implementation
  * Implements business logic for application management
  */
-@Service
+//@Service
 public class ApplicationServiceImpl extends BaseServiceImpl<ApplicationMapper, Application>
     implements ApplicationService {
 
