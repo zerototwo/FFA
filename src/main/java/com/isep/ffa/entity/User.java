@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
- * 用户实体类
- * 对应数据库表：users
+ * User实体类
+ * Database table：users
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,7 +16,7 @@ import java.util.List;
 public class User {
 
   /**
-   * 主键ID（对应person表的id）
+   * Primary Key ID（对应person表的id）
    */
   @TableId(value = "person_id", type = IdType.INPUT)
   private Long personId;

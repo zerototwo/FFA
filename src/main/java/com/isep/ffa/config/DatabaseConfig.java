@@ -5,8 +5,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * 数据库配置类
- * 同时支持JPA和MyBatis-Plus
+ * Database Configuration Class
+ * Supports both JPA and MyBatis-Plus
  */
 @Configuration
 @EnableJpaRepositories(basePackages = "com.isep.ffa.repository")

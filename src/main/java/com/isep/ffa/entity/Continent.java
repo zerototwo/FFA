@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
- * 大陆实体类
- * 对应数据库表：continent
+ * Continent实体类
+ * Database table：continent
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,13 +16,13 @@ import java.util.List;
 public class Continent {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 大陆名称
+   * Continent名称
    */
   @TableField("name")
   private String name;

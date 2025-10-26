@@ -22,35 +22,35 @@ spring:
 
 # MyBatis-Plus Configuration
 mybatis-plus:
-  # Mapper XML文件位置
+  # Mapper XML file location
   mapper-locations: classpath*:/mapper/**/*.xml
-  # 实体类包路径
+  # Entity class package path
   type-aliases-package: com.isep.ffa.entity
-  # 全局配置
+  # Global configuration
   global-config:
-    # 数据库字段驼峰下划线转换
+    # Database field camel case conversion
     db-config:
-      # 主键类型
+      # Primary key type
       id-type: auto
-      # 逻辑删除字段
+      # Logical delete field
       logic-delete-field: isDeleted
-      # 逻辑删除值
+      # Logical delete value
       logic-delete-value: true
-      # 逻辑未删除值
+      # Logical not-delete value
       logic-not-delete-value: false
-      # 字段策略
+      # Field strategy
       field-strategy: not_null
-      # 表名前缀
+      # Table name prefix
       table-prefix: ""
-    # 是否开启SQL性能分析
+    # Enable SQL performance analysis
     banner: false
-  # 原生配置
+  # Native configuration
   configuration:
-    # 是否开启自动驼峰命名规则映射
+    # Enable automatic camel case naming convention mapping
     map-underscore-to-camel-case: true
-    # 开启Mybatis二级缓存
+    # Enable MyBatis second-level cache
     cache-enabled: false
-    # 打印SQL语句
+    # Print SQL statements
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   
   # Security Configuration

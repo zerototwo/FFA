@@ -4,7 +4,7 @@ import com.isep.ffa.entity.Role;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 角色Mapper接口
+ * Role Mapper Interface
  */
 @Mapper
 public interface RoleMapper extends CustomBaseMapper<Role> {

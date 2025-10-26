@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * 角色实体类
- * 对应数据库表：role
+ * Role实体类
+ * Database table：role
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,19 +16,19 @@ import java.time.LocalDate;
 public class Role {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 角色名称
+   * Role名称
    */
   @TableField("name")
   private String name;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField("creation_date")
   private LocalDate creationDate;

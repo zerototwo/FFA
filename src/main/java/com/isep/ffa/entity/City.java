@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 城市实体类
- * 对应数据库表：city
+ * Database table：city
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -17,55 +17,55 @@ import java.util.List;
 public class City {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 城市名称
+   * City Name
    */
   @TableField("name")
   private String name;
 
   /**
-   * 邮政编码
+   * Postal Code
    */
   @TableField("postal_code")
   private Integer postalCode;
 
   /**
-   * 部门ID
+   * Department ID
    */
   @TableField("department_id")
   private Long departmentId;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField(value = "creation_date", fill = FieldFill.INSERT)
   private LocalDate creationDate;
 
   /**
-   * 最后修改日期
+   * Last Modification Date
    */
   @TableField(value = "last_modification_date", fill = FieldFill.INSERT_UPDATE)
   private LocalDate lastModificationDate;
 
   /**
-   * 创建用户ID
+   * Creator User ID
    */
   @TableField("creator_user")
   private Long creatorUser;
 
   /**
-   * 最后修改用户ID
+   * Last Modificator User ID
    */
   @TableField("last_modificator_user")
   private Long lastModificatorUser;
 
   /**
-   * 是否删除（逻辑删除）
+   * Is Deleted（逻辑删除）
    */
   @TableLogic
   @TableField("is_deleted")
@@ -73,19 +73,19 @@ public class City {
 
   // 关联对象（非数据库字段）
   /**
-   * 部门信息
+   * Department信息
    */
   @TableField(exist = false)
   private Department department;
 
   /**
-   * 大使馆列表
+   * Embassy列表
    */
   @TableField(exist = false)
   private List<Embassy> embassies;
 
   /**
-   * 机构列表
+   * Institution列表
    */
   @TableField(exist = false)
   private List<Institution> institutions;

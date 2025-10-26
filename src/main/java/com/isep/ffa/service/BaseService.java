@@ -7,62 +7,62 @@ import com.isep.ffa.dto.PagedResponse;
 import java.util.List;
 
 /**
- * 自定义BaseService接口
- * 继承MyBatis-Plus的IService，提供基础的CRUD操作
+ * Custom BaseService Interface
+ * Extends MyBatis-Plus IService, provides basic CRUD operations
  * 
- * @param <T> 实体类型
+ * @param <T> Entity type
  */
 public interface BaseService<T> extends IService<T> {
 
   /**
-   * 分页查询
+   * Paginated query
    * 
-   * @param page 页码
-   * @param size 每页大小
-   * @return 分页结果
+   * @param page Page number
+   * @param size Page size
+   * @return Paginated result
    */
   PagedResponse<T> getPage(int page, int size);
 
   /**
-   * 分页查询（带排序）
+   * Paginated query (with sorting)
    * 
-   * @param page    页码
-   * @param size    每页大小
-   * @param sortBy  排序字段
-   * @param sortDir 排序方向
-   * @return 分页结果
+   * @param page    Page number
+   * @param size    Page size
+   * @param sortBy  Sort field
+   * @param sortDir Sort direction
+   * @return Paginated result
    */
   PagedResponse<T> getPage(int page, int size, String sortBy, String sortDir);
 
   /**
-   * 根据ID列表查询
+   * Query by ID list
    * 
-   * @param ids ID列表
-   * @return 实体列表
+   * @param ids ID list
+   * @return Entity list
    */
   List<T> getByIds(List<Long> ids);
 
   /**
-   * 根据ID列表删除
+   * Delete by ID list
    * 
-   * @param ids ID列表
-   * @return 是否成功
+   * @param ids ID list
+   * @return Success or not
    */
   boolean deleteByIds(List<Long> ids);
 
   /**
-   * 批量保存
+   * Batch save
    * 
-   * @param entities 实体列表
-   * @return 是否成功
+   * @param entities Entity list
+   * @return Success or not
    */
   boolean saveBatch(List<T> entities);
 
   /**
-   * 批量更新
+   * Batch update
    * 
-   * @param entities 实体列表
-   * @return 是否成功
+   * @param entities Entity list
+   * @return Success or not
    */
   boolean updateBatchById(List<T> entities);
 }

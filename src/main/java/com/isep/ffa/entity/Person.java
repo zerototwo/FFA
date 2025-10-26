@@ -8,8 +8,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * 人员实体类
- * 对应数据库表：person
+ * Person Entity
+ * Database table：person
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -17,79 +17,79 @@ import java.time.LocalDate;
 public class Person {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 名字
+   * First Name
    */
   @TableField("first_name")
   private String firstName;
 
   /**
-   * 姓氏
+   * Last Name
    */
   @TableField("last_name")
   private String lastName;
 
   /**
-   * 邮箱
+   * Email
    */
   @TableField("email")
   private String email;
 
   /**
-   * 地址
+   * Address
    */
   @TableField("address")
   private String address;
 
   /**
-   * 登录名
+   * Login Name
    */
   @TableField("login")
   private String login;
 
   /**
-   * 角色ID
+   * Role ID
    */
   @TableField("role_id")
   private Long roleId;
 
   /**
-   * 城市ID
+   * City ID
    */
   @TableField("city_id")
   private Long cityId;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField(value = "creation_date", fill = FieldFill.INSERT)
   private LocalDate creationDate;
 
   /**
-   * 最后修改日期
+   * Last Modification Date
    */
   @TableField(value = "last_modification_date", fill = FieldFill.INSERT_UPDATE)
   private LocalDate lastModificationDate;
 
   /**
-   * 创建用户ID
+   * Creator User ID
    */
   @TableField("creator_user")
   private Long creatorUser;
 
   /**
-   * 最后修改用户ID
+   * Last Modificator User ID
    */
   @TableField("last_modificator_user")
   private Long lastModificatorUser;
 
   /**
-   * 是否删除（逻辑删除）
+   * Is Deleted（逻辑删除）
    */
   @TableLogic
   @TableField("is_deleted")
@@ -97,7 +97,7 @@ public class Person {
 
   // 关联对象（非数据库字段）
   /**
-   * 角色信息
+   * Role信息
    */
   @TableField(exist = false)
   private Role role;

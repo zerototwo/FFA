@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * 文档类型实体类
- * 对应数据库表：document_type
+ * Document Type实体类
+ * Database table：document_type
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,43 +16,43 @@ import java.time.LocalDate;
 public class DocumentType {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 文档类型名称
+   * Document Type名称
    */
   @TableField("name")
   private String name;
 
   /**
-   * 项目ID
+   * Project ID
    */
   @TableField("project_id")
   private Long projectId;
 
   /**
-   * 最后修改日期
+   * Last Modification Date
    */
   @TableField(value = "last_modification_date", fill = FieldFill.INSERT_UPDATE)
   private LocalDate lastModificationDate;
 
   /**
-   * 创建用户ID
+   * Creator User ID
    */
   @TableField("creator_user")
   private Long creatorUser;
 
   /**
-   * 最后修改用户ID
+   * Last Modificator User ID
    */
   @TableField("last_modificator_user")
   private Long lastModificatorUser;
 
   /**
-   * 是否删除（逻辑删除）
+   * Is Deleted（逻辑删除）
    */
   @TableLogic
   @TableField("is_deleted")
@@ -60,7 +60,7 @@ public class DocumentType {
 
   // 关联对象（非数据库字段）
   /**
-   * 项目信息
+   * Project信息
    */
   @TableField(exist = false)
   private Project project;

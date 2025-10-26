@@ -10,20 +10,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * MyBatis-Plus配置类
+ * MyBatis-Plus Configuration Class
  */
 @Configuration
 @MapperScan("com.isep.ffa.mapper")
 public class MybatisPlusConfig {
 
   /**
-   * MyBatis-Plus插件配置
+   * MyBatis-Plus Plugin Configuration
    */
   @Bean
   public MybatisPlusInterceptor mybatisPlusInterceptor() {
     MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
 
-    // 插件配置 - 暂时注释，需要单独引入插件依赖
+    // Plugin configuration - temporarily commented out, need to introduce plugin
+    // dependencies separately
     // interceptor.addInnerInterceptor(new
     // PaginationInnerInterceptor(DbType.POSTGRE_SQL));
     // interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());

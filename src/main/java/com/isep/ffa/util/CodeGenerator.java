@@ -13,104 +13,110 @@ import java.util.Collections;
 import java.util.Scanner;
 
 /**
- * MyBatis-Plus代码生成器
- * 用于自动生成Entity、Mapper、Service、Controller等代码
+ * MyBatis-Plus Code Generator
+ * Used to automatically generate Entity, Mapper, Service, Controller and other
+ * code
  */
 public class CodeGenerator {
 
   public static void main(String[] args) {
-    // 数据库连接配置
+    // Database connection configuration
     String url = "jdbc:postgresql://localhost:5432/testdb";
     String username = "admin";
     String password = "123456";
 
-    // 项目配置
+    // Project configuration
     String projectPath = System.getProperty("user.dir");
     String parentPackage = "com.isep.ffa";
 
-    // 交互式输入表名
+    // Interactive table name input
     Scanner scanner = new Scanner(System.in);
-    System.out.println("请输入要生成的表名（多个表用逗号分隔，输入all生成所有表）：");
+    System.out.println(
+        "Please enter the table names to generate (separate multiple tables with commas, enter 'all' to generate all tables):");
     String tableNames = scanner.nextLine();
 
     FastAutoGenerator.create(url, username, password)
-        // 全局配置
+        // Global configuration
         .globalConfig(builder -> {
-          builder.author("FFA Development Team") // 设置作者
-              .enableSwagger() // 开启swagger模式
-              // .fileOverride(true) // 覆盖已生成文件 - 暂时注释掉
-              .outputDir(projectPath + "/src/main/java") // 指定输出目录
-              .dateType(DateType.TIME_PACK) // 时间策略
-              .commentDate("yyyy-MM-dd HH:mm:ss"); // 注释日期
+          builder.author("FFA Development Team") // Set author
+              .enableSwagger() // Enable swagger mode
+              // .fileOverride(true) // Overwrite existing files - temporarily commented out
+              .outputDir(projectPath + "/src/main/java") // Specify output directory
+              .dateType(DateType.TIME_PACK) // Time strategy
+              .commentDate("yyyy-MM-dd HH:mm:ss"); // Comment date
         })
-        // 数据源配置 - 暂时注释掉，需要根据MyBatis-Plus版本调整
+        // Data source configuration - temporarily commented out, needs adjustment based
+        // on MyBatis-Plus version
         // .dataSourceConfig(builder -> {
         // builder.setUrl(url)
         // .setUsername(username)
         // .setPassword(password)
         // .setDriverName("org.postgresql.Driver");
         // })
-        // 包配置
+        // Package configuration
         .packageConfig(builder -> {
-          builder.parent(parentPackage) // 设置父包名
-              .moduleName("") // 设置父包模块名
-              .entity("entity") // 实体类包名
-              .mapper("mapper") // Mapper包名
-              .service("service") // Service包名
-              .serviceImpl("service.impl") // ServiceImpl包名
-              .controller("controller") // Controller包名
-              .xml("mapper") // Mapper XML包名
-              .pathInfo(Collections.singletonMap(OutputFile.xml, projectPath + "/src/main/resources/mapper")); // 设置mapperXml生成路径
+          builder.parent(parentPackage) // Set parent package name
+              .moduleName("") // Set parent package module name
+              .entity("entity") // Entity class package name
+              .mapper("mapper") // Mapper package name
+              .service("service") // Service package name
+              .serviceImpl("service.impl") // ServiceImpl package name
+              .controller("controller") // Controller package name
+              .xml("mapper") // Mapper XML package name
+              .pathInfo(Collections.singletonMap(OutputFile.xml, projectPath + "/src/main/resources/mapper")); // Set
+                                                                                                               // mapperXml
+                                                                                                               // generation
+                                                                                                               // path
         })
-        // 策略配置
+        // Strategy configuration
         .strategyConfig(builder -> {
-          // 设置需要生成的表名
+          // Set table names to generate
           if ("all".equalsIgnoreCase(tableNames)) {
-            builder.addInclude(".*"); // 生成所有表
+            builder.addInclude(".*"); // Generate all tables
           } else {
-            builder.addInclude(tableNames.split(",")); // 生成指定表
+            builder.addInclude(tableNames.split(",")); // Generate specified tables
           }
 
-          // Entity策略配置
+          // Entity strategy configuration
           builder.entityBuilder()
-              .enableLombok() // 开启lombok模型
-              .enableChainModel() // 开启链式模型
-              .enableRemoveIsPrefix() // 开启Boolean类型字段移除is前缀
-              .enableTableFieldAnnotation() // 开启生成实体时生成字段注解
-              .enableActiveRecord() // 开启ActiveRecord模式
-              .versionColumnName("version") // 乐观锁字段名
-              .versionPropertyName("version") // 乐观锁属性名
-              .logicDeleteColumnName("is_deleted") // 逻辑删除字段名
-              .logicDeletePropertyName("isDeleted") // 逻辑删除属性名
-              .naming(NamingStrategy.underline_to_camel) // 数据库表映射到实体的命名策略
-              .columnNaming(NamingStrategy.underline_to_camel) // 数据库表字段映射到实体的命名策略
+              .enableLombok() // Enable lombok model
+              .enableChainModel() // Enable chain model
+              .enableRemoveIsPrefix() // Enable Boolean type field to remove is prefix
+              .enableTableFieldAnnotation() // Enable field annotation generation when generating entities
+              .enableActiveRecord() // Enable ActiveRecord mode
+              .versionColumnName("version") // Optimistic lock column name
+              .versionPropertyName("version") // Optimistic lock property name
+              .logicDeleteColumnName("is_deleted") // Logical delete column name
+              .logicDeletePropertyName("isDeleted") // Logical delete property name
+              .naming(NamingStrategy.underline_to_camel) // Database table to entity naming strategy
+              .columnNaming(NamingStrategy.underline_to_camel) // Database table field to entity naming strategy
               .addSuperEntityColumns("id", "creation_date", "last_modification_date", "creator_user",
-                  "last_modificator_user", "is_deleted") // 添加父类公共字段
-              .addTableFills(new Column("creation_date", FieldFill.INSERT)) // 添加表字段填充
-              .addTableFills(new Column("last_modification_date", FieldFill.INSERT_UPDATE)) // 添加表字段填充
-              .idType(IdType.AUTO); // 全局主键类型
+                  "last_modificator_user", "is_deleted") // Add parent class common fields
+              .addTableFills(new Column("creation_date", FieldFill.INSERT)) // Add table field fill
+              .addTableFills(new Column("last_modification_date", FieldFill.INSERT_UPDATE)) // Add table field fill
+              .idType(IdType.AUTO); // Global primary key type
 
-          // Mapper策略配置
+          // Mapper strategy configuration
           builder.mapperBuilder()
-              .enableMapperAnnotation() // 开启@Mapper注解
-              .enableBaseResultMap() // 启用BaseResultMap生成
-              .enableBaseColumnList(); // 启用BaseColumnList
+              .enableMapperAnnotation() // Enable @Mapper annotation
+              .enableBaseResultMap() // Enable BaseResultMap generation
+              .enableBaseColumnList(); // Enable BaseColumnList
 
-          // Service策略配置
+          // Service strategy configuration
           builder.serviceBuilder()
-              .formatServiceFileName("%sService") // 格式化service接口文件名称
-              .formatServiceImplFileName("%sServiceImpl"); // 格式化service实现类文件名称
+              .formatServiceFileName("%sService") // Format service interface file name
+              .formatServiceImplFileName("%sServiceImpl"); // Format service implementation class file name
 
-          // Controller策略配置
+          // Controller strategy configuration
           builder.controllerBuilder()
-              .enableHyphenStyle() // 开启驼峰转连字符
-              .enableRestStyle(); // 开启生成@RestController控制器
+              .enableHyphenStyle() // Enable camel case to hyphen conversion
+              .enableRestStyle(); // Enable @RestController controller generation
         })
-        // 使用Freemarker引擎模板，默认的是Velocity引擎
+        // Use Freemarker engine template, default is Velocity engine
         .templateEngine(new FreemarkerTemplateEngine())
         .execute();
 
-    System.out.println("代码生成完成！");
+    System.out.println("Code generation completed!");
     scanner.close();
   }
 }

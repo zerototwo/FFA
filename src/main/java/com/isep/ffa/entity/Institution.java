@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * 机构实体类
- * 对应数据库表：institution
+ * Institution实体类
+ * Database table：institution
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,55 +16,55 @@ import java.time.LocalDate;
 public class Institution {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 机构名称
+   * Institution名称
    */
   @TableField("name")
   private String name;
 
   /**
-   * 地址
+   * Address
    */
   @TableField("address")
   private String address;
 
   /**
-   * 城市ID
+   * City ID
    */
   @TableField("city_id")
   private Long cityId;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField(value = "creation_date", fill = FieldFill.INSERT)
   private LocalDate creationDate;
 
   /**
-   * 最后修改日期
+   * Last Modification Date
    */
   @TableField(value = "last_modification_date", fill = FieldFill.INSERT_UPDATE)
   private LocalDate lastModificationDate;
 
   /**
-   * 创建用户ID
+   * Creator User ID
    */
   @TableField("creator_user")
   private Long creatorUser;
 
   /**
-   * 最后修改用户ID
+   * Last Modificator User ID
    */
   @TableField("last_modificator_user")
   private Long lastModificatorUser;
 
   /**
-   * 是否删除（逻辑删除）
+   * Is Deleted（逻辑删除）
    */
   @TableLogic
   @TableField("is_deleted")

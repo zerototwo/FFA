@@ -7,15 +7,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.Map;
 
 /**
- * MyBatis-Plus工具类
- * 提供常用的查询和更新方法
+ * MyBatis-Plus Utility Class
+ * Provides common query and update methods
  */
 public class MybatisPlusUtils {
 
   /**
-   * 构建查询条件
+   * Build query conditions
    * 
-   * @param params 查询参数
+   * @param params Query parameters
    * @return QueryWrapper
    */
   public static <T> QueryWrapper<T> buildQueryWrapper(Map<String, Object> params) {
@@ -33,7 +33,7 @@ public class MybatisPlusUtils {
         continue;
       }
 
-      // 处理特殊查询条件
+      // Handle special query conditions
       if (key.endsWith("_like")) {
         String fieldName = key.substring(0, key.length() - 5);
         queryWrapper.like(fieldName, value);
@@ -57,7 +57,7 @@ public class MybatisPlusUtils {
           queryWrapper.in(fieldName, (Object[]) value);
         }
       } else {
-        // 默认等值查询
+        // Default equality query
         queryWrapper.eq(key, value);
       }
     }
@@ -66,9 +66,9 @@ public class MybatisPlusUtils {
   }
 
   /**
-   * 构建更新条件
+   * Build update conditions
    * 
-   * @param params 更新参数
+   * @param params Update parameters
    * @return UpdateWrapper
    */
   public static <T> UpdateWrapper<T> buildUpdateWrapper(Map<String, Object> params) {
@@ -93,32 +93,32 @@ public class MybatisPlusUtils {
   }
 
   /**
-   * 构建分页对象
+   * Build pagination object
    * 
-   * @param page 页码
-   * @param size 每页大小
-   * @return Page对象
+   * @param page Page number
+   * @param size Page size
+   * @return Page object
    */
   public static <T> Page<T> buildPage(int page, int size) {
     return new Page<>(page, size);
   }
 
   /**
-   * 构建分页对象（带排序）
+   * Build pagination object (with sorting)
    * 
-   * @param page    页码
-   * @param size    每页大小
-   * @param sortBy  排序字段
-   * @param sortDir 排序方向
-   * @return Page对象
+   * @param page    Page number
+   * @param size    Page size
+   * @param sortBy  Sort field
+   * @param sortDir Sort direction
+   * @return Page object
    */
   public static <T> Page<T> buildPage(int page, int size, String sortBy, String sortDir) {
     Page<T> pageObj = new Page<>(page, size);
 
-    // 暂时不支持排序
-    // TODO: 实现排序功能
+    // Sorting not supported temporarily
+    // TODO: Implement sorting functionality
     if (sortBy != null && !sortBy.trim().isEmpty()) {
-      // 暂时忽略排序
+      // Temporarily ignore sorting
     }
 
     return pageObj;

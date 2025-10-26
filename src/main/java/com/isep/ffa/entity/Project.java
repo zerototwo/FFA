@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 项目实体类
- * 对应数据库表：project
+ * Project实体类
+ * Database table：project
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -17,67 +17,67 @@ import java.util.List;
 public class Project {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 项目名称
+   * Project Name
    */
   @TableField("name")
   private String name;
 
   /**
-   * 项目描述
+   * Project Description
    */
   @TableField("description")
   private String description;
 
   /**
-   * 提交日期
+   * Submission Date
    */
   @TableField("submission_date")
   private LocalDate submissionDate;
 
   /**
-   * 干预者ID
+   * Intervener ID
    */
   @TableField("intervener_id")
   private Long intervenerId;
 
   /**
-   * 获胜用户ID
+   * Winner User ID
    */
   @TableField("winner_user_id")
   private Long winnerUserId;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField(value = "creation_date", fill = FieldFill.INSERT)
   private LocalDate creationDate;
 
   /**
-   * 最后修改日期
+   * Last Modification Date
    */
   @TableField(value = "last_modification_date", fill = FieldFill.INSERT_UPDATE)
   private LocalDate lastModificationDate;
 
   /**
-   * 创建用户ID
+   * Creator User ID
    */
   @TableField("creator_user")
   private Long creatorUser;
 
   /**
-   * 最后修改用户ID
+   * Last Modificator User ID
    */
   @TableField("last_modificator_user")
   private Long lastModificatorUser;
 
   /**
-   * 是否删除（逻辑删除）
+   * Is Deleted（逻辑删除）
    */
   @TableLogic
   @TableField("is_deleted")
@@ -85,13 +85,13 @@ public class Project {
 
   // 关联对象（非数据库字段）
   /**
-   * 干预者信息
+   * Intervener信息
    */
   @TableField(exist = false)
   private Intervener intervener;
 
   /**
-   * 获胜用户信息
+   * 获胜User信息
    */
   @TableField(exist = false)
   private User winnerUser;

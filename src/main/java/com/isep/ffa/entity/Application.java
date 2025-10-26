@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * 申请实体类
- * 对应数据库表：application
+ * Database table：application
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -18,61 +18,61 @@ import java.util.List;
 public class Application {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 申请日期
+   * Application Date
    */
   @TableField("date_application")
   private LocalDateTime dateApplication;
 
   /**
-   * 申请动机
+   * 申请Motivation
    */
   @TableField("motivation")
   private String motivation;
 
   /**
-   * 用户ID
+   * User ID
    */
   @TableField("user_id")
   private Long userId;
 
   /**
-   * 项目ID
+   * Project ID
    */
   @TableField("project_id")
   private Long projectId;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField(value = "creation_date", fill = FieldFill.INSERT)
   private LocalDate creationDate;
 
   /**
-   * 最后修改日期
+   * Last Modification Date
    */
   @TableField(value = "last_modification_date", fill = FieldFill.INSERT_UPDATE)
   private LocalDate lastModificationDate;
 
   /**
-   * 创建用户ID
+   * Creator User ID
    */
   @TableField("creator_user")
   private Long creatorUser;
 
   /**
-   * 最后修改用户ID
+   * Last Modificator User ID
    */
   @TableField("last_modificator_user")
   private Long lastModificatorUser;
 
   /**
-   * 是否删除（逻辑删除）
+   * Is Deleted（逻辑删除）
    */
   @TableLogic
   @TableField("is_deleted")
@@ -80,13 +80,13 @@ public class Application {
 
   // 关联对象（非数据库字段）
   /**
-   * 用户信息
+   * User信息
    */
   @TableField(exist = false)
   private User user;
 
   /**
-   * 项目信息
+   * Project信息
    */
   @TableField(exist = false)
   private Project project;

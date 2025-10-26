@@ -7,31 +7,31 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
- * 申请Mapper接口
+ * Application Mapper Interface
  */
 @Mapper
 public interface ApplicationMapper extends CustomBaseMapper<Application> {
 
   /**
-   * 根据项目ID查询申请列表
+   * Find applications by project ID
    */
   @Select("SELECT * FROM application WHERE project_id = #{projectId} AND is_deleted = 0")
   List<Application> findByProjectId(Long projectId);
 
   /**
-   * 根据用户ID查询申请列表
+   * Find applications by user ID
    */
   @Select("SELECT * FROM application WHERE user_id = #{userId} AND is_deleted = 0")
   List<Application> findByUserId(Long userId);
 
   /**
-   * 根据申请日期范围查询申请列表
+   * Find applications by application date range
    */
   @Select("SELECT * FROM application WHERE date_application BETWEEN #{startDate} AND #{endDate} AND is_deleted = 0")
   List<Application> findByDateApplicationRange(String startDate, String endDate);
 
   /**
-   * 根据动机模糊查询申请列表
+   * Find applications by motivation keyword
    */
   @Select("SELECT * FROM application WHERE motivation LIKE CONCAT('%', #{keyword}, '%') AND is_deleted = 0")
   List<Application> findByMotivationLike(String keyword);

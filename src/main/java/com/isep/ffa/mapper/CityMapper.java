@@ -7,25 +7,25 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
- * 城市Mapper接口
+ * City Mapper Interface
  */
 @Mapper
 public interface CityMapper extends CustomBaseMapper<City> {
 
   /**
-   * 根据名称查询城市
+   * Find city by name
    */
   @Select("SELECT * FROM city WHERE name = #{name} AND is_deleted = 0")
   City findByName(String name);
 
   /**
-   * 根据部门ID查询城市列表
+   * Find cities by department ID
    */
   @Select("SELECT * FROM city WHERE department_id = #{departmentId} AND is_deleted = 0")
   List<City> findByDepartmentId(Long departmentId);
 
   /**
-   * 根据邮政编码查询城市
+   * Find city by postal code
    */
   @Select("SELECT * FROM city WHERE postal_code = #{postalCode} AND is_deleted = 0")
   City findByPostalCode(Integer postalCode);

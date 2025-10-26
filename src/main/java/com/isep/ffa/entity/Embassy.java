@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 大使馆实体类
- * 对应数据库表：embassy
+ * Embassy实体类
+ * Database table：embassy
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -17,61 +17,61 @@ import java.util.List;
 public class Embassy {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 地址
+   * Address
    */
   @TableField("address")
   private String address;
 
   /**
-   * 所属国家ID（大使馆代表的国家）
+   * 所属国家ID（Embassy代表的国家）
    */
   @TableField("embassy_of_country_id")
   private Long embassyOfCountryId;
 
   /**
-   * 所在国家ID（大使馆所在的国家）
+   * 所在国家ID（Embassy所在的国家）
    */
   @TableField("embassy_in_country_id")
   private Long embassyInCountryId;
 
   /**
-   * 城市ID
+   * City ID
    */
   @TableField("city_id")
   private Long cityId;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField(value = "creation_date", fill = FieldFill.INSERT)
   private LocalDate creationDate;
 
   /**
-   * 最后修改日期
+   * Last Modification Date
    */
   @TableField(value = "last_modification_date", fill = FieldFill.INSERT_UPDATE)
   private LocalDate lastModificationDate;
 
   /**
-   * 创建用户ID
+   * Creator User ID
    */
   @TableField("creator_user")
   private Long creatorUser;
 
   /**
-   * 最后修改用户ID
+   * Last Modificator User ID
    */
   @TableField("last_modificator_user")
   private Long lastModificatorUser;
 
   /**
-   * 是否删除（逻辑删除）
+   * Is Deleted（逻辑删除）
    */
   @TableLogic
   @TableField("is_deleted")
@@ -97,7 +97,7 @@ public class Embassy {
   private City city;
 
   /**
-   * 干预者列表
+   * Intervener列表
    */
   @TableField(exist = false)
   private List<Intervener> interveners;

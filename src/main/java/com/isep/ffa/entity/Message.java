@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * 消息实体类
- * 对应数据库表：message
+ * Message实体类
+ * Database table：message
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,37 +16,37 @@ import java.time.LocalDateTime;
 public class Message {
 
   /**
-   * 主键ID
+   * Primary Key ID
    */
   @TableId(value = "id", type = IdType.AUTO)
   private Long id;
 
   /**
-   * 消息内容
+   * Message内容
    */
   @TableField("content")
   private String content;
 
   /**
-   * 发送者ID
+   * Sender ID
    */
   @TableField("sender_id")
   private Long senderId;
 
   /**
-   * 接收者ID
+   * Receiver ID
    */
   @TableField("receiver_id")
   private Long receiverId;
 
   /**
-   * 创建日期
+   * Creation Date
    */
   @TableField("create_date")
   private LocalDateTime createDate;
 
   /**
-   * 是否已读
+   * Is Read
    */
   @TableField("is_read")
   private Boolean isRead;
@@ -58,13 +58,13 @@ public class Message {
   private LocalDateTime readDate;
 
   /**
-   * 回复消息ID
+   * 回复MessageID
    */
   @TableField("reply_to")
   private Long replyTo;
 
   /**
-   * 是否删除
+   * Is Deleted
    */
   @TableField("is_deleted")
   private Boolean isDeleted;
@@ -83,7 +83,7 @@ public class Message {
   private Person receiver;
 
   /**
-   * 回复的消息
+   * 回复的Message
    */
   @TableField(exist = false)
   private Message replyMessage;

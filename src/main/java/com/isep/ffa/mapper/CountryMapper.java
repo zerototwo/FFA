@@ -7,25 +7,25 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
- * 国家Mapper接口
+ * Country Mapper Interface
  */
 @Mapper
 public interface CountryMapper extends CustomBaseMapper<Country> {
 
   /**
-   * 根据名称查询国家
+   * Find country by name
    */
   @Select("SELECT * FROM country WHERE name = #{name} AND is_deleted = false")
   Country findByName(String name);
 
   /**
-   * 根据电话区号查询国家
+   * Find country by phone number indicator
    */
   @Select("SELECT * FROM country WHERE phone_number_indicator = #{phoneIndicator} AND is_deleted = false")
   Country findByPhoneIndicator(String phoneIndicator);
 
   /**
-   * 根据大陆ID查询国家列表
+   * Find countries by continent ID
    */
   @Select("SELECT * FROM country WHERE continent_id = #{continentId} AND is_deleted = false")
   List<Country> findByContinentId(Long continentId);

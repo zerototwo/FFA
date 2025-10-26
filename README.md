@@ -1,97 +1,183 @@
-# FFA Platform - Backend API
+# FFA Platform
 
-## 项目概述
-FFA Platform是一个大使馆合作项目管理系统，提供项目发布、申请和管理功能。
+A comprehensive platform for managing French international mobility programs, facilitating applications, embassy information, and project administration.
 
-## 技术栈
-- **Java 17**
-- **Spring Boot 3.5.6**
-- **Spring Data JPA**
-- **MyBatis-Plus 3.5.4.1**
-- **Spring Security**
-- **PostgreSQL**
-- **Swagger/OpenAPI 3**
-- **JWT Authentication**
-- **MapStruct**
-- **Lombok**
+## Features
 
-## 项目结构
+- **Country & Embassy Management**: Browse and search country information and embassy locations
+- **Project Management**: View and apply for international mobility projects
+- **Application System**: Submit and track project applications
+- **User Management**: Role-based access control for different user types
+- **Messaging & Alerts**: Internal communication and notification system
+- **Document Management**: Upload and manage application documents
+
+## Technology Stack
+
+- **Backend Framework**: Spring Boot 3.2.0
+- **Database**: PostgreSQL 15+
+- **ORM**: MyBatis-Plus 3.5.14
+- **Security**: Spring Security with JWT authentication
+- **API Documentation**: SpringDoc OpenAPI 3.0 (Swagger)
+- **Build Tool**: Maven
+- **Java Version**: 17
+- **Frontend**: Vue.js 3 + PrimeVue (Separate repository)
+
+## Getting Started
+
+### Prerequisites
+
+- Java 17 or higher
+- Maven 3.8+
+- PostgreSQL 15+
+- Docker (optional, for database setup)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd FFA
+   ```
+
+2. **Database Setup**
+   
+   Using Docker:
+   ```bash
+   docker run --name ffa-postgres \
+     -e POSTGRES_DB=ffa_platform \
+     -e POSTGRES_USER=admin \
+     -e POSTGRES_PASSWORD=123456 \
+     -p 5432:5432 \
+     -d postgres:15
+   ```
+
+   Or use your existing PostgreSQL instance:
+   ```sql
+   CREATE DATABASE ffa_platform;
+   CREATE USER admin WITH PASSWORD '123456';
+   GRANT ALL PRIVILEGES ON DATABASE ffa_platform TO admin;
+   ```
+
+3. **Run Database Migrations**
+   
+   Connect to the database and execute the initialization scripts in `src/main/resources/db/migration/`
+
+4. **Configuration**
+   
+   Update `src/main/resources/application.yaml` with your database credentials if needed.
+
+5. **Build and Run**
+   ```bash
+   mvn clean install
+   mvn spring-boot:run
+   ```
+
+   Or use your IDE to run `FfaApplication.java`
+
+6. **Access the Application**
+   - API Base URL: `http://localhost:8080/ffaAPI`
+   - Swagger UI: `http://localhost:8080/ffaAPI/swagger-ui.html`
+   - API Docs: `http://localhost:8080/ffaAPI/v3/api-docs`
+
+## API Endpoints
+
+### Public Endpoints (No Authentication Required)
+- `GET /ffaAPI/public/countries` - Get all countries
+- `GET /ffaAPI/public/countries/{id}` - Get country by ID
+- `GET /ffaAPI/public/countries/search` - Search countries
+- `GET /ffaAPI/public/embassies` - Get all embassies
+- `GET /ffaAPI/public/projects` - Get available projects
+
+### Authentication Endpoints
+- `POST /ffaAPI/auth/login` - User login
+- `POST /ffaAPI/auth/register` - User registration
+- `POST /ffaAPI/auth/forgot-password` - Request password reset
+- `POST /ffaAPI/auth/reset-password` - Reset password
+
+### Protected Endpoints (Authentication Required)
+- Application management endpoints
+- User profile endpoints
+- Admin endpoints
+
+## Project Structure
+
 ```
-src/main/java/com/isep/ffa/
-├── config/                 # 配置类
-│   ├── SwaggerConfig.java
-│   └── DatabaseConfig.java
-├── controller/             # REST控制器
-├── service/               # 业务逻辑层
-├── repository/            # 数据访问层
-├── mapper/                # MyBatis-Plus Mapper接口
-├── entity/                # JPA实体类
-├── dto/                   # 数据传输对象
-│   ├── request/           # 请求DTO
-│   └── response/          # 响应DTO
-├── mapper/                # MapStruct映射器
-├── security/              # 安全配置
-├── exception/             # 异常处理
-└── util/                  # 工具类
+FFA/
+├── src/
+│   ├── main/
+│   │   ├── java/com/isep/ffa/
+│   │   │   ├── config/          # Configuration classes
+│   │   │   ├── controller/      # REST controllers
+│   │   │   ├── dto/             # Data Transfer Objects
+│   │   │   ├── entity/          # Entity classes
+│   │   │   ├── mapper/          # MyBatis-Plus mappers
+│   │   │   ├── repository/      # JPA repositories
+│   │   │   ├── security/        # Security configuration
+│   │   │   ├── service/         # Service layer
+│   │   │   └── util/            # Utility classes
+│   │   └── resources/
+│   │       ├── application.yaml # Application configuration
+│   │       └── db/migration/    # Database migration scripts
+│   └── test/                    # Test classes
+├── pom.xml                      # Maven configuration
+└── README.md                    # This file
 ```
 
-## 数据库配置
-- **URL**: jdbc:postgresql://localhost:5432/testdb
-- **用户名**: admin
-- **密码**: 123456
+## Development
 
-## API文档
-启动应用后访问：
-- **Swagger UI**: http://localhost:8080/ffaAPI/swagger-ui.html
-- **API Docs**: http://localhost:8080/ffaAPI/api-docs
+### Code Style
+- Follow Java naming conventions
+- Use English for all comments and documentation
+- Write meaningful commit messages
 
-## 开发规范
+### Database Changes
+- Always create migration scripts for schema changes
+- Test migrations on development database first
+- Follow existing naming conventions
 
-### API路径规范
-- 管理员API: `/ffaAPI/admin/`
-- 干预者API: `/ffaAPI/intervener/`
-- 用户API: `/ffaAPI/user/`
-- 认证API: `/ffaAPI/auth/`
+### Security
+- Never commit credentials or sensitive information
+- Use environment variables for configuration
+- Keep dependencies updated for security patches
 
-### 命名规范
-- 使用camelCase命名
-- API方法名与类图方法名一致
-- 实体类使用PascalCase
-- 字段使用camelCase
+## Testing
 
-## 启动说明
-1. 确保PostgreSQL数据库运行在localhost:5432
-2. 创建数据库`testdb`
-3. 运行应用：`mvn spring-boot:run`
-4. 访问Swagger UI查看API文档
-
-## MyBatis-Plus特性
-- **代码生成器**: 自动生成Entity、Mapper、Service、Controller
-- **分页插件**: 内置分页功能，支持多种数据库
-- **乐观锁**: 内置乐观锁插件
-- **逻辑删除**: 支持逻辑删除功能
-- **自动填充**: 自动填充创建时间、修改时间等字段
-- **条件构造器**: 强大的查询条件构造器
-- **性能分析**: SQL性能分析插件
-
-## 代码生成器使用
-运行 `CodeGenerator.java` 可以自动生成代码：
-```java
-// 生成指定表的代码
-CodeGenerator.main(new String[]{"person", "country", "embassy"});
-
-// 生成所有表的代码
-CodeGenerator.main(new String[]{"all"});
+Run all tests:
+```bash
+mvn test
 ```
 
-## 开发任务
-- [x] 项目基础设置
-- [x] Swagger集成
-- [x] 数据库配置
-- [x] MyBatis-Plus集成
-- [ ] 实体类创建
-- [ ] Mapper接口
-- [ ] Service层
-- [ ] Controller层
-- [ ] 安全认证
-- [ ] 测试
+Run with coverage:
+```bash
+mvn test jacoco:report
+```
+
+## Deployment
+
+### Production Environment
+1. Set up PostgreSQL database
+2. Configure environment variables
+3. Update `application.yaml` with production settings
+4. Build production JAR:
+   ```bash
+   mvn clean package -Pprod
+   ```
+5. Run the application:
+   ```bash
+   java -jar target/ffa-0.0.1-SNAPSHOT.jar
+   ```
+
+## Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Write tests for new features
+4. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contact
+
+For questions or support, please contact the development team.

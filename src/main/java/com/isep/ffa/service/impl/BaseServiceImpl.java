@@ -10,10 +10,10 @@ import com.isep.ffa.service.BaseService;
 import java.util.List;
 
 /**
- * 自定义BaseService实现类
+ * Custom BaseService Implementation Class
  * 
- * @param <M> Mapper类型
- * @param <T> 实体类型
+ * @param <M> Mapper type
+ * @param <T> Entity type
  */
 public abstract class BaseServiceImpl<M extends CustomBaseMapper<T>, T> extends ServiceImpl<M, T>
     implements BaseService<T> {
@@ -34,10 +34,10 @@ public abstract class BaseServiceImpl<M extends CustomBaseMapper<T>, T> extends 
   public PagedResponse<T> getPage(int page, int size, String sortBy, String sortDir) {
     Page<T> pageParam = new Page<>(page, size);
 
-    // 设置排序 - 简化版本，暂时不支持排序
-    // TODO: 实现排序功能
+    // Set sorting - simplified version, sorting not supported temporarily
+    // TODO: Implement sorting functionality
     if (sortBy != null && !sortBy.isEmpty()) {
-      // 暂时忽略排序，直接使用分页
+      // Temporarily ignore sorting, use pagination directly
     }
 
     Page<T> result = page(pageParam);
