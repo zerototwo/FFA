@@ -1,0 +1,11 @@
+# Ignore build artifacts and local environment files to keep the image small.
+target/
+.idea/
+.vscode/
+*.iml
+*.log
+node_modules/
+.DS_Store
+ProjectsDocuments/
+Specifications/
+
