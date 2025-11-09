@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,8 +35,8 @@ public class PublicController {
   // @Autowired
   // private ProjectService projectService;
 
-  // @Autowired
-  // private CityService cityService;
+  @Autowired
+  private CityService cityService;
 
   // ==================== COUNTRY INFORMATION ====================
 
@@ -240,8 +239,8 @@ public class PublicController {
   public BaseResponse<PagedResponse<City>> getAllCities(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    PagedResponse<City> cities = cityService.getPage(page, size);
+    return BaseResponse.success("Cities retrieved successfully", cities);
   }
 
   /**
@@ -251,8 +250,7 @@ public class PublicController {
   @Operation(summary = "Get city by ID", description = "Retrieve city information by ID")
   public BaseResponse<City> getCityById(
       @Parameter(description = "City ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    return cityService.getCityWithDetails(id);
   }
 
   /**
@@ -264,8 +262,7 @@ public class PublicController {
       @Parameter(description = "Search keyword") @RequestParam String keyword,
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    return cityService.searchCities(keyword, page, size);
   }
 
   // ==================== SYSTEM INFORMATION ====================
