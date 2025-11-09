@@ -3,14 +3,22 @@ package com.isep.ffa.controller;
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.request.LoginRequest;
 import com.isep.ffa.entity.Person;
-import com.isep.ffa.security.AuthService;
 import com.isep.ffa.dto.request.RegisterRequest;
+import com.isep.ffa.security.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -31,7 +39,14 @@ public class AuthController {
    * User login
    */
   @PostMapping("/login")
-  @Operation(summary = "User login", description = "Authenticate user with login credentials")
+  @Operation(summary = "User login", description = "Authenticate user with login credentials",
+      requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+          content = @Content(schema = @Schema(implementation = LoginRequest.class),
+              examples = @ExampleObject(name = "LoginRequest",
+                  value = "{\n"
+                      + "  \"login\": \"alice.johnson@example.com\",\n"
+                      + "  \"password\": \"Secret123!\"\n"
+                      + "}"))))
   public BaseResponse<Map<String, Object>> login(@RequestBody @Valid LoginRequest request) {
     return authService.authenticateUser(request.getLogin(), request.getPassword());
   }
@@ -40,7 +55,23 @@ public class AuthController {
    * User registration
    */
   @PostMapping("/register")
-  @Operation(summary = "User registration", description = "Register a new user")
+  @Operation(summary = "User registration", description = "Register a new user account. "
+      + "The API is served under the `/ffaAPI` context path (full URL: `/ffaAPI/auth/register`).",
+      requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+          content = @Content(schema = @Schema(implementation = RegisterRequest.class),
+              examples = @ExampleObject(name = "RegisterRequest",
+                  value = "{\n"
+                      + "  \"firstName\": \"Alice\",\n"
+                      + "  \"lastName\": \"Johnson\",\n"
+                      + "  \"email\": \"alice.johnson@example.com\",\n"
+                      + "  \"login\": \"alice.johnson\",\n"
+                      + "  \"password\": \"Secret123!\",\n"
+                      + "  \"address\": \"123 Embassy Road\",\n"
+                      + "  \"cityId\": 6,\n"
+                      + "  \"organizationType\": \"EMBASSY\",\n"
+                      + "  \"organizationId\": 3,\n"
+                      + "  \"organizationName\": null\n"
+                      + "}"))))
   public BaseResponse<Person> register(@RequestBody @Valid RegisterRequest request) {
     return authService.registerUser(request);
   }
