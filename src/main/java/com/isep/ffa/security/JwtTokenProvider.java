@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
@@ -108,7 +109,7 @@ public class JwtTokenProvider {
    * Get signing key
    */
   private SecretKey getSigningKey() {
-    byte[] keyBytes = jwtSecret.getBytes();
+    byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
     return Keys.hmacShaKeyFor(keyBytes);
   }
 
