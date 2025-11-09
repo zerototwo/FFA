@@ -3,6 +3,7 @@ package com.isep.ffa.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -19,6 +20,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.isep.ffa.service.PersonService;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Spring Security Configuration
@@ -33,6 +36,7 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final PersonService personService;
   private final PasswordEncoder passwordEncoder;
+  private final Environment environment;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -75,22 +79,18 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
+    String allowedOriginsProperty = environment.getProperty("app.cors.allowed-origins", "*");
+    List<String> allowedOrigins = Arrays.stream(allowedOriginsProperty.split(","))
+        .map(String::trim)
+        .filter(origin -> !origin.isEmpty())
+        .collect(Collectors.toList());
+    configuration.setAllowedOriginPatterns(allowedOrigins);
 
-    // 允许的源
-    configuration.setAllowedOriginPatterns(Arrays.asList(
-        "*",
-        "http://localhost:*",
-        "https://localhost:*",
-        "http://127.0.0.1:*",
-        "https://127.0.0.1:*",
-        "https://ffa-api.isep.fr",
-        "http://ffa-api.isep.fr"));
-
-    // 允许的HTTP方法
+    // Allowed HTTP methods
     configuration.setAllowedMethods(Arrays.asList(
         "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
 
-    // 允许的请求头
+    // Allowed request headers
     configuration.setAllowedHeaders(Arrays.asList(
         "*",
         "Authorization",
@@ -101,17 +101,17 @@ public class SecurityConfig {
         "Access-Control-Request-Method",
         "Access-Control-Request-Headers"));
 
-    // 允许的响应头
+    // Exposed response headers
     configuration.setExposedHeaders(Arrays.asList(
         "Access-Control-Allow-Origin",
         "Access-Control-Allow-Credentials",
         "Access-Control-Allow-Headers",
         "Access-Control-Allow-Methods"));
 
-    // 允许发送凭证
+    // Allow credentials
     configuration.setAllowCredentials(true);
 
-    // 预检请求的缓存时间（秒）
+    // Cache duration for pre-flight requests (seconds)
     configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

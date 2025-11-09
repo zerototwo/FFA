@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Embassy实体类
- * Database table：embassy
+ * Embassy entity class
+ * Database table: embassy
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -29,13 +29,13 @@ public class Embassy {
   private String address;
 
   /**
-   * 所属国家ID（Embassy代表的国家）
+   * Country ID represented by the embassy
    */
   @TableField("embassy_of_country_id")
   private Long embassyOfCountryId;
 
   /**
-   * 所在国家ID（Embassy所在的国家）
+   * Country ID where the embassy is located
    */
   @TableField("embassy_in_country_id")
   private Long embassyInCountryId;
@@ -71,33 +71,33 @@ public class Embassy {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 所属国家信息
+   * Represented country information
    */
   @TableField(exist = false)
   private Country embassyOfCountry;
 
   /**
-   * 所在国家信息
+   * Host country information
    */
   @TableField(exist = false)
   private Country embassyInCountry;
 
   /**
-   * 城市信息
+   * City information
    */
   @TableField(exist = false)
   private City city;
 
   /**
-   * Intervener列表
+   * Intervener list
    */
   @TableField(exist = false)
   private List<Intervener> interveners;

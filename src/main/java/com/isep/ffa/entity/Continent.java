@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
- * Continent实体类
- * Database table：continent
+ * Continent entity class
+ * Database table: continent
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,14 +22,14 @@ public class Continent {
   private Long id;
 
   /**
-   * Continent名称
+   * Continent name
    */
   @TableField("name")
   private String name;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 国家列表
+   * Country list
    */
   @TableField(exist = false)
   private List<Country> countries;

@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * Role实体类
- * Database table：role
+ * Role entity class
+ * Database table: role
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,7 +22,7 @@ public class Role {
   private Long id;
 
   /**
-   * Role名称
+   * Role name
    */
   @TableField("name")
   private String name;

@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * 已提交文档实体类
- * Database table：documents_submitted
+ * Submitted document entity
+ * Database table: documents_submitted
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,7 +22,7 @@ public class DocumentsSubmitted {
   private Long id;
 
   /**
-   * 文档路径
+   * Document path
    */
   @TableField("path")
   private String path;
@@ -34,7 +34,7 @@ public class DocumentsSubmitted {
   private Long documentTypeId;
 
   /**
-   * 申请ID
+   * Application ID
    */
   @TableField("application_id")
   private Long applicationId;
@@ -64,21 +64,21 @@ public class DocumentsSubmitted {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Document Type信息
+   * Document type information
    */
   @TableField(exist = false)
   private DocumentType documentType;
 
   /**
-   * 申请信息
+   * Application information
    */
   @TableField(exist = false)
   private Application application;

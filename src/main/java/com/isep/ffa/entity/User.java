@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
- * User实体类
- * Database table：users
+ * User entity class
+ * Database table: users
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,20 +16,20 @@ import java.util.List;
 public class User {
 
   /**
-   * Primary Key ID（对应person表的id）
+   * Primary key ID (references person table ID)
    */
   @TableId(value = "person_id", type = IdType.INPUT)
   private Long personId;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 人员信息
+   * Person information
    */
   @TableField(exist = false)
   private Person person;
 
   /**
-   * 申请列表
+   * Application list
    */
   @TableField(exist = false)
   private List<Application> applications;

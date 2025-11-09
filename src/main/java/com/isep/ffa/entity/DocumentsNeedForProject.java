@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * Project所需文档实体类
- * Database table：documents_need_for_project
+ * Documents required for project entity
+ * Database table: documents_need_for_project
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,19 +22,19 @@ public class DocumentsNeedForProject {
   private Long id;
 
   /**
-   * 是否必需
+   * Whether the document is mandatory
    */
   @TableField("is_mandatory")
   private Boolean isMandatory;
 
   /**
-   * 最大数量
+   * Maximum number of documents
    */
   @TableField("max_number")
   private Integer maxNumber;
 
   /**
-   * 最小数量
+   * Minimum number of documents
    */
   @TableField("min_number")
   private Integer minNumber;
@@ -76,21 +76,21 @@ public class DocumentsNeedForProject {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Document Type信息
+   * Document type information
    */
   @TableField(exist = false)
   private DocumentType documentType;
 
   /**
-   * Project信息
+   * Project information
    */
   @TableField(exist = false)
   private Project project;

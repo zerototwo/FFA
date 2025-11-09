@@ -110,22 +110,22 @@ public class Person {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @Schema(description = "Logical deletion flag", example = "false")
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Role信息
+   * Role information
    */
   @TableField(exist = false)
   private Role role;
 
   /**
-   * 城市信息
+   * City information
    */
   @TableField(exist = false)
   private City city;

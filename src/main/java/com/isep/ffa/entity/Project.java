@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Project实体类
- * Database table：project
+ * Project entity class
+ * Database table: project
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -77,27 +77,27 @@ public class Project {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Intervener信息
+   * Intervener information
    */
   @TableField(exist = false)
   private Intervener intervener;
 
   /**
-   * 获胜User信息
+   * Winner user information
    */
   @TableField(exist = false)
   private User winnerUser;
 
   /**
-   * 申请列表
+   * Application list
    */
   @TableField(exist = false)
   private List<Application> applications;

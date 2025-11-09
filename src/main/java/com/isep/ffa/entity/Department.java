@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Department实体类
- * Database table：department
+ * Department entity class
+ * Database table: department
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -23,7 +23,7 @@ public class Department {
   private Long id;
 
   /**
-   * Department名称
+   * Department name
    */
   @TableField("name")
   private String name;
@@ -59,21 +59,21 @@ public class Department {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Region信息
+   * Region information
    */
   @TableField(exist = false)
   private Region region;
 
   /**
-   * 城市列表
+   * City list
    */
   @TableField(exist = false)
   private List<City> cities;

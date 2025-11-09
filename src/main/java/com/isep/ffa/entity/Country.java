@@ -65,27 +65,27 @@ public class Country {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Continent信息
+   * Continent information
    */
   @TableField(exist = false)
   private Continent continent;
 
   /**
-   * Region列表
+   * Region list
    */
   @TableField(exist = false)
   private List<Region> regions;
 
   /**
-   * Embassy列表
+   * Embassy list
    */
   @TableField(exist = false)
   private List<Embassy> embassies;

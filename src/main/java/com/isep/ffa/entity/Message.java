@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * Message实体类
- * Database table：message
+ * Message entity class
+ * Database table: message
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,7 +22,7 @@ public class Message {
   private Long id;
 
   /**
-   * Message内容
+   * Message content
    */
   @TableField("content")
   private String content;
@@ -52,13 +52,13 @@ public class Message {
   private Boolean isRead;
 
   /**
-   * 阅读日期
+   * Read date
    */
   @TableField("read_date")
   private LocalDateTime readDate;
 
   /**
-   * 回复MessageID
+   * Reply message ID
    */
   @TableField("reply_to")
   private Long replyTo;
@@ -69,21 +69,21 @@ public class Message {
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 发送者信息
+   * Sender information
    */
   @TableField(exist = false)
   private Person sender;
 
   /**
-   * 接收者信息
+   * Receiver information
    */
   @TableField(exist = false)
   private Person receiver;
 
   /**
-   * 回复的Message
+   * Reply message
    */
   @TableField(exist = false)
   private Message replyMessage;

@@ -34,7 +34,10 @@ public class SwaggerConfig {
                                                                 .description("Development Server"),
                                                 new Server()
                                                                 .url("https://ffa-api.isep.fr/ffaAPI")
-                                                                .description("Production Server")))
+                                                                .description("Production Server"),
+                                                new Server()
+                                                                .url("https://ffa-aj0b.onrender.com/ffaAPI")
+                                                                .description("Render Production Server")))
                                 .tags(Arrays.asList(
                                                 new Tag().name("Authentication")
                                                                 .description("User authentication and authorization"),

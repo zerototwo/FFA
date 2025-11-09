@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * Alert实体类
- * Database table：alert
+ * Alert entity class
+ * Database table: alert
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,7 +22,7 @@ public class Alert {
   private Long id;
 
   /**
-   * Alert内容
+   * Alert content
    */
   @TableField("content")
   private String content;
@@ -40,7 +40,7 @@ public class Alert {
   private Boolean isRead;
 
   /**
-   * 阅读日期
+   * Read date
    */
   @TableField("read_date")
   private LocalDateTime readDate;
@@ -52,14 +52,14 @@ public class Alert {
   private Boolean isDeleted;
 
   /**
-   * Alert日期
+   * Alert date
    */
   @TableField("alert_date")
   private LocalDateTime alertDate;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 接收者信息
+   * Receiver information
    */
   @TableField(exist = false)
   private Person receiver;

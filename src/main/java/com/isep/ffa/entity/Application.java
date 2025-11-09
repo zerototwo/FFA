@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 申请实体类
- * Database table：application
+ * Application entity class
+ * Database table: application
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -30,7 +30,7 @@ public class Application {
   private LocalDateTime dateApplication;
 
   /**
-   * 申请Motivation
+   * Application motivation
    */
   @TableField("motivation")
   private String motivation;
@@ -72,27 +72,27 @@ public class Application {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * User信息
+   * User information
    */
   @TableField(exist = false)
   private User user;
 
   /**
-   * Project信息
+   * Project information
    */
   @TableField(exist = false)
   private Project project;
 
   /**
-   * 已提交文档列表
+   * Submitted documents list
    */
   @TableField(exist = false)
   private List<DocumentsSubmitted> documentsSubmitted;

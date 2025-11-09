@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.util.List;
 
 /**
- * Intervener实体类
- * Database table：intervener
+ * Intervener entity class
+ * Database table: intervener
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -16,32 +16,32 @@ import java.util.List;
 public class Intervener {
 
   /**
-   * Primary Key ID（对应person表的id）
+   * Primary key ID (references person table ID)
    */
   @TableId(value = "person_id", type = IdType.INPUT)
   private Long personId;
 
   /**
-   * EmbassyID
+   * Embassy ID
    */
   @TableField("embassy_id")
   private Long embassyId;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 人员信息
+   * Person information
    */
   @TableField(exist = false)
   private Person person;
 
   /**
-   * Embassy信息
+   * Embassy information
    */
   @TableField(exist = false)
   private Embassy embassy;
 
   /**
-   * Project列表
+   * Project list
    */
   @TableField(exist = false)
   private List<Project> projects;

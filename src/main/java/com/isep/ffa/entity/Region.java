@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Region实体类
- * Database table：region
+ * Region entity class
+ * Database table: region
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -23,13 +23,13 @@ public class Region {
   private Long id;
 
   /**
-   * Region名称
+   * Region name
    */
   @TableField("name")
   private String name;
 
   /**
-   * 国家ID
+   * Country ID
    */
   @TableField("country_id")
   private Long countryId;
@@ -59,21 +59,21 @@ public class Region {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 国家信息
+   * Country information
    */
   @TableField(exist = false)
   private Country country;
 
   /**
-   * Department列表
+   * Department list
    */
   @TableField(exist = false)
   private List<Department> departments;

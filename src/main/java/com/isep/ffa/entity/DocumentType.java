@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * Document Type实体类
- * Database table：document_type
+ * Document type entity class
+ * Database table: document_type
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,7 +22,7 @@ public class DocumentType {
   private Long id;
 
   /**
-   * Document Type名称
+   * Document type name
    */
   @TableField("name")
   private String name;
@@ -52,15 +52,15 @@ public class DocumentType {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Project信息
+   * Project information
    */
   @TableField(exist = false)
   private Project project;

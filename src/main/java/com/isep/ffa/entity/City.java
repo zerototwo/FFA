@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 城市实体类
- * Database table：city
+ * City entity class
+ * Database table: city
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -65,27 +65,27 @@ public class City {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * Department信息
+   * Department information
    */
   @TableField(exist = false)
   private Department department;
 
   /**
-   * Embassy列表
+   * Embassy list
    */
   @TableField(exist = false)
   private List<Embassy> embassies;
 
   /**
-   * Institution列表
+   * Institution list
    */
   @TableField(exist = false)
   private List<Institution> institutions;

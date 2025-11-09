@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 
 /**
- * Institution实体类
- * Database table：institution
+ * Institution entity class
+ * Database table: institution
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -22,7 +22,7 @@ public class Institution {
   private Long id;
 
   /**
-   * Institution名称
+   * Institution name
    */
   @TableField("name")
   private String name;
@@ -64,15 +64,15 @@ public class Institution {
   private Long lastModificatorUser;
 
   /**
-   * Is Deleted（逻辑删除）
+   * Is Deleted (logical delete)
    */
   @TableLogic
   @TableField("is_deleted")
   private Boolean isDeleted;
 
-  // 关联对象（非数据库字段）
+  // Related objects (non-persistent fields)
   /**
-   * 城市信息
+   * City information
    */
   @TableField(exist = false)
   private City city;
