@@ -10,7 +10,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.management.ManagementFactory;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Public Controller
@@ -32,8 +37,8 @@ public class PublicController {
   @Autowired
   private InstitutionService institutionService;
 
-  // @Autowired
-  // private ProjectService projectService;
+  @Autowired
+  private ProjectService projectService;
 
   @Autowired
   private CityService cityService;
@@ -201,8 +206,7 @@ public class PublicController {
   public BaseResponse<PagedResponse<Project>> getAvailableProjects(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    return projectService.getAvailableProjects(page, size);
   }
 
   /**
@@ -212,8 +216,7 @@ public class PublicController {
   @Operation(summary = "Get project by ID", description = "Retrieve project information by ID")
   public BaseResponse<Project> getProjectById(
       @Parameter(description = "Project ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    return projectService.getProjectWithDetails(id);
   }
 
   /**
@@ -225,8 +228,7 @@ public class PublicController {
       @Parameter(description = "Search keyword") @RequestParam String keyword,
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    return projectService.searchByDescription(keyword, page, size);
   }
 
   // ==================== CITY INFORMATION ====================
@@ -273,8 +275,12 @@ public class PublicController {
   @GetMapping("/health")
   @Operation(summary = "System health check", description = "Check system health status")
   public BaseResponse<Object> getHealth() {
-    // TODO: Implement business logic
-    return null;
+    Map<String, Object> health = new HashMap<>();
+    health.put("status", "UP");
+    health.put("timestamp", Instant.now());
+    long uptimeMillis = ManagementFactory.getRuntimeMXBean().getUptime();
+    health.put("uptime", Duration.ofMillis(uptimeMillis).toString());
+    return BaseResponse.success("System is healthy", health);
   }
 
   /**
@@ -283,7 +289,10 @@ public class PublicController {
   @GetMapping("/version")
   @Operation(summary = "Get system version", description = "Get system version information")
   public BaseResponse<Object> getVersion() {
-    // TODO: Implement business logic
-    return null;
+    Map<String, Object> versionInfo = new HashMap<>();
+    versionInfo.put("application", "FFA Platform");
+    versionInfo.put("version", "0.0.1-SNAPSHOT");
+    versionInfo.put("buildTime", Instant.now());
+    return BaseResponse.success("Version information retrieved", versionInfo);
   }
 }
