@@ -8,6 +8,11 @@ spring:
     username: ffa_pgsql_user
     password: gFZdGDkzxhcQCfsaKfxntc9n6EuLBZWT
     driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
   
   # JPA Configuration
   jpa:
@@ -62,7 +67,7 @@ mybatis-plus:
 # JWT Configuration
 app:
   jwt:
-    secret: mySecretKey
+    secret: ffa-platform-super-secret-key-123456789012345678901234
     expiration: 86400000  # 24 hours in milliseconds
     refresh-expiration: 604800000  # 7 days in milliseconds
 

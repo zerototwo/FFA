@@ -20,15 +20,18 @@ import java.util.List;
  * Base path: /ffaAPI/public
  */
 @RestController
-@RequestMapping("/ffaAPI/public")
+@RequestMapping("/public")
 @Tag(name = "Public API", description = "Public operations accessible without authentication")
 public class PublicController {
 
   @Autowired
   private CountryService countryService;
 
-  // @Autowired
-  // private EmbassyService embassyService;
+  @Autowired
+  private EmbassyService embassyService;
+
+  @Autowired
+  private InstitutionService institutionService;
 
   // @Autowired
   // private ProjectService projectService;
@@ -102,10 +105,10 @@ public class PublicController {
   @GetMapping("/embassies")
   @Operation(summary = "Get all embassies", description = "Retrieve paginated list of all embassies")
   public BaseResponse<PagedResponse<Embassy>> getAllEmbassies(
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Page number (starting from 1)") @RequestParam(defaultValue = "1") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    PagedResponse<Embassy> response = embassyService.getPage(page, size);
+    return BaseResponse.success("Embassies retrieved successfully", response);
   }
 
   /**
@@ -115,8 +118,7 @@ public class PublicController {
   @Operation(summary = "Get embassy by ID", description = "Retrieve embassy information by ID")
   public BaseResponse<Embassy> getEmbassyById(
       @Parameter(description = "Embassy ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    return embassyService.getEmbassyWithDetails(id);
   }
 
   /**
@@ -126,8 +128,7 @@ public class PublicController {
   @Operation(summary = "Get embassies by country", description = "Retrieve embassies for a specific country")
   public BaseResponse<List<Embassy>> getEmbassiesByCountry(
       @Parameter(description = "Country ID") @PathVariable Long countryId) {
-    // TODO: Implement business logic
-    return null;
+    return embassyService.findByEmbassyInCountryId(countryId);
   }
 
   /**
@@ -137,10 +138,58 @@ public class PublicController {
   @Operation(summary = "Search embassies", description = "Search embassies by address")
   public BaseResponse<PagedResponse<Embassy>> searchEmbassies(
       @Parameter(description = "Address keyword") @RequestParam String address,
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Page number (starting from 1)") @RequestParam(defaultValue = "1") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    return embassyService.searchByAddress(address, page, size);
+  }
+
+  // ==================== INSTITUTION INFORMATION ====================
+
+  /**
+   * Get all institutions
+   */
+  @GetMapping("/institutions")
+  @Operation(summary = "Get all institutions", description = "Retrieve paginated list of all institutions")
+  public BaseResponse<PagedResponse<Institution>> getAllInstitutions(
+      @Parameter(description = "Page number (starting from 1)") @RequestParam(defaultValue = "1") int page,
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+    PagedResponse<Institution> response = institutionService.getPage(page, size);
+    return BaseResponse.success("Institutions retrieved successfully", response);
+  }
+
+  /**
+   * Get institution by ID
+   */
+  @GetMapping("/institutions/{id}")
+  @Operation(summary = "Get institution by ID", description = "Retrieve institution information by ID")
+  public BaseResponse<Institution> getInstitutionById(
+      @Parameter(description = "Institution ID") @PathVariable Long id) {
+    Institution institution = institutionService.getById(id);
+    return institution != null
+        ? BaseResponse.success("Institution found", institution)
+        : BaseResponse.error("Institution not found with ID: " + id, 404);
+  }
+
+  /**
+   * Get institutions by city
+   */
+  @GetMapping("/cities/{cityId}/institutions")
+  @Operation(summary = "Get institutions by city", description = "Retrieve institutions for a specific city")
+  public BaseResponse<List<Institution>> getInstitutionsByCity(
+      @Parameter(description = "City ID") @PathVariable Long cityId) {
+    return institutionService.findByCityId(cityId);
+  }
+
+  /**
+   * Search institutions
+   */
+  @GetMapping("/institutions/search")
+  @Operation(summary = "Search institutions", description = "Search institutions by name keyword")
+  public BaseResponse<PagedResponse<Institution>> searchInstitutions(
+      @Parameter(description = "Search keyword") @RequestParam String keyword,
+      @Parameter(description = "Page number (starting from 1)") @RequestParam(defaultValue = "1") int page,
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+    return institutionService.searchByName(keyword, page, size);
   }
 
   // ==================== PROJECT INFORMATION ====================

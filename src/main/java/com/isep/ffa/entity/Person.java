@@ -1,7 +1,7 @@
 package com.isep.ffa.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -45,6 +45,13 @@ public class Person {
    */
   @TableField("address")
   private String address;
+
+  /**
+   * Password (hashed)
+   */
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  @TableField("password")
+  private String password;
 
   /**
    * Login Name
@@ -107,4 +114,22 @@ public class Person {
    */
   @TableField(exist = false)
   private City city;
+
+  /**
+   * Organisation type selected during registration (EMBASSY/INSTITUTION/OTHER)
+   */
+  @TableField("organization_type")
+  private String organizationType;
+
+  /**
+   * Organisation identifier (embassy or institution ID)
+   */
+  @TableField("organization_id")
+  private Long organizationId;
+
+  /**
+   * Organisation name (for other organisations or display)
+   */
+  @TableField("organization_name")
+  private String organizationName;
 }

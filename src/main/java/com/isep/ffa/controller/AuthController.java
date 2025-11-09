@@ -1,11 +1,14 @@
 package com.isep.ffa.controller;
 
 import com.isep.ffa.dto.BaseResponse;
+import com.isep.ffa.dto.request.LoginRequest;
 import com.isep.ffa.entity.Person;
 import com.isep.ffa.security.AuthService;
+import com.isep.ffa.dto.request.RegisterRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +19,8 @@ import java.util.Map;
  * Provides REST API endpoints for authentication operations
  * Base path: /ffaAPI/auth
  */
-// @RestController
-@RequestMapping("/ffaAPI/auth")
+@RestController
+@RequestMapping("/auth")
 @Tag(name = "Authentication API", description = "Authentication and authorization operations")
 public class AuthController {
 
@@ -29,10 +32,8 @@ public class AuthController {
    */
   @PostMapping("/login")
   @Operation(summary = "User login", description = "Authenticate user with login credentials")
-  public BaseResponse<Map<String, Object>> login(
-      @Parameter(description = "Login name or email") @RequestParam String login,
-      @Parameter(description = "Password") @RequestParam String password) {
-    return authService.authenticateUser(login, password);
+  public BaseResponse<Map<String, Object>> login(@RequestBody @Valid LoginRequest request) {
+    return authService.authenticateUser(request.getLogin(), request.getPassword());
   }
 
   /**
@@ -40,8 +41,8 @@ public class AuthController {
    */
   @PostMapping("/register")
   @Operation(summary = "User registration", description = "Register a new user")
-  public BaseResponse<Person> register(@RequestBody Person person) {
-    return authService.registerUser(person);
+  public BaseResponse<Person> register(@RequestBody @Valid RegisterRequest request) {
+    return authService.registerUser(request);
   }
 
   /**

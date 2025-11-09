@@ -1,7 +1,6 @@
 package com.isep.ffa.security;
 
 import com.isep.ffa.entity.Person;
-import com.isep.ffa.entity.Role;
 import com.isep.ffa.service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,8 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Custom User Details Service
@@ -53,18 +50,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
       // Get authorities based on role
-      if (person.getRole() != null) {
+      if (person.getRole() != null && person.getRole().getName() != null) {
         return Collections.singletonList(
             new SimpleGrantedAuthority("ROLE_" + person.getRole().getName().toUpperCase()));
       }
-      return Collections.emptyList();
+      return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
     public String getPassword() {
-      // TODO: Implement password retrieval
-      // For now, return a placeholder
-      return "password";
+      return person.getPassword();
     }
 
     @Override
@@ -89,7 +84,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public boolean isEnabled() {
-      return !person.getIsDeleted();
+      return person.getIsDeleted() == null || !person.getIsDeleted();
     }
 
     // Getter for Person entity

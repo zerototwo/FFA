@@ -2,24 +2,23 @@ package com.isep.ffa.security;
 
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.entity.Person;
+import com.isep.ffa.dto.request.RegisterRequest;
 import com.isep.ffa.service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Authentication Service
  * Handles authentication and authorization logic
  */
-// @Service
+@Service
 public class AuthService {
 
   @Autowired
@@ -30,9 +29,6 @@ public class AuthService {
 
   @Autowired
   private PersonService personService;
-
-  @Autowired
-  private PasswordEncoder passwordEncoder;
 
   /**
    * Authenticate user with login credentials
@@ -73,34 +69,22 @@ public class AuthService {
   /**
    * Register new user
    */
-  public BaseResponse<Person> registerUser(Person person) {
-    try {
-      // Check if user already exists
-      Optional<Person> existingUser = personService.findByLoginOrEmail(person.getLogin());
-      if (existingUser.isPresent()) {
-        return BaseResponse.error("User already exists: Login or email already registered", 400);
-      }
-
-      // Encode password
-      String encodedPassword = passwordEncoder.encode("defaultPassword"); // TODO: Get from request
-      // person.setPassword(encodedPassword); // TODO: Add password field to Person
-      // entity
-
-      // Set default role (USER)
-      // TODO: Set default role
-
-      // Save user
-      BaseResponse<Person> result = personService.createPerson(person);
-
-      if (result.isSuccess()) {
-        return BaseResponse.success("User registered successfully", result.getData());
-      } else {
-        return result;
-      }
-
-    } catch (Exception e) {
-      return BaseResponse.error("Registration failed: " + e.getMessage(), 500);
+  public BaseResponse<Person> registerUser(RegisterRequest request) {
+    Person person = new Person();
+    person.setFirstName(request.getFirstName());
+    person.setLastName(request.getLastName());
+    person.setEmail(request.getEmail());
+    person.setLogin(request.getLogin());
+    person.setPassword(request.getPassword());
+    person.setAddress(request.getAddress());
+    person.setCityId(request.getCityId());
+    if (request.getOrganizationType() != null) {
+      person.setOrganizationType(request.getOrganizationType().trim().toUpperCase());
     }
+    person.setOrganizationId(request.getOrganizationId());
+    person.setOrganizationName(request.getOrganizationName());
+
+    return personService.createPerson(person);
   }
 
   /**

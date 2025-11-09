@@ -17,7 +17,7 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-  @Value("${app.jwt.secret:mySecretKey}")
+  @Value("${app.jwt.secret:ffa-platform-super-secret-key-123456789012345678901234}")
   private String jwtSecret;
 
   @Value("${app.jwt.expiration:86400000}")
