@@ -1,8 +1,9 @@
 package com.isep.ffa.security;
 
 import com.isep.ffa.dto.BaseResponse;
-import com.isep.ffa.entity.Person;
 import com.isep.ffa.dto.request.RegisterRequest;
+import com.isep.ffa.dto.response.AuthTokensResponse;
+import com.isep.ffa.entity.Person;
 import com.isep.ffa.service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,8 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * Authentication Service
@@ -33,7 +33,7 @@ public class AuthService {
   /**
    * Authenticate user with login credentials
    */
-  public BaseResponse<Map<String, Object>> authenticateUser(String login, String password) {
+  public BaseResponse<AuthTokensResponse> authenticateUser(String login, String password) {
     try {
       // Authenticate user
       Authentication authentication = authenticationManager.authenticate(
@@ -50,14 +50,13 @@ public class AuthService {
           .getPrincipal();
       Person person = userPrincipal.getPerson();
 
-      // Prepare response
-      Map<String, Object> response = new HashMap<>();
-      response.put("accessToken", jwt);
-      response.put("refreshToken", refreshToken);
-      response.put("tokenType", "Bearer");
-      response.put("expiresIn", 86400); // 24 hours
-      response.put("user", person);
-      response.put("role", userPrincipal.getRole());
+      AuthTokensResponse response = AuthTokensResponse.builder()
+          .accessToken(jwt)
+          .refreshToken(refreshToken)
+          .tokenType("Bearer")
+          .expiresIn(86400)
+          .user(person)
+          .build();
 
       return BaseResponse.success("Login successful", response);
 
@@ -90,7 +89,7 @@ public class AuthService {
   /**
    * Refresh JWT token
    */
-  public BaseResponse<Map<String, Object>> refreshToken(String refreshToken) {
+  public BaseResponse<AuthTokensResponse> refreshToken(String refreshToken) {
     try {
       if (tokenProvider.validateToken(refreshToken)) {
         String username = tokenProvider.getUsernameFromJWT(refreshToken);
@@ -99,11 +98,15 @@ public class AuthService {
         String newAccessToken = tokenProvider.generateTokenFromUsername(username);
         String newRefreshToken = tokenProvider.generateRefreshToken(username);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("accessToken", newAccessToken);
-        response.put("refreshToken", newRefreshToken);
-        response.put("tokenType", "Bearer");
-        response.put("expiresIn", 86400);
+        Optional<Person> person = personService.findByLoginOrEmail(username);
+
+        AuthTokensResponse response = AuthTokensResponse.builder()
+            .accessToken(newAccessToken)
+            .refreshToken(newRefreshToken)
+            .tokenType("Bearer")
+            .expiresIn(86400)
+            .user(person.orElse(null))
+            .build();
 
         return BaseResponse.success("Token refreshed successfully", response);
       } else {

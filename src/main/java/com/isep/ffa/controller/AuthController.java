@@ -1,9 +1,10 @@
 package com.isep.ffa.controller;
 
 import com.isep.ffa.dto.BaseResponse;
-import com.isep.ffa.dto.request.LoginRequest;
-import com.isep.ffa.entity.Person;
 import com.isep.ffa.dto.request.RegisterRequest;
+import com.isep.ffa.dto.request.LoginRequest;
+import com.isep.ffa.dto.response.AuthTokensResponse;
+import com.isep.ffa.entity.Person;
 import com.isep.ffa.security.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,14 +14,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Authentication Controller
@@ -47,7 +43,13 @@ public class AuthController {
                       + "  \"login\": \"alice.johnson@example.com\",\n"
                       + "  \"password\": \"Secret123!\"\n"
                       + "}"))))
-  public BaseResponse<Map<String, Object>> login(@RequestBody @Valid LoginRequest request) {
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Login successful",
+          content = @Content(schema = @Schema(implementation = AuthTokensResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+      @ApiResponse(responseCode = "500", description = "Unexpected error")
+  })
+  public BaseResponse<AuthTokensResponse> login(@RequestBody @Valid LoginRequest request) {
     return authService.authenticateUser(request.getLogin(), request.getPassword());
   }
 
@@ -72,6 +74,13 @@ public class AuthController {
                       + "  \"organizationId\": 3,\n"
                       + "  \"organizationName\": null\n"
                       + "}"))))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Registration successful",
+          content = @Content(schema = @Schema(implementation = Person.class))),
+      @ApiResponse(responseCode = "400", description = "Validation error"),
+      @ApiResponse(responseCode = "409", description = "Duplicate login/email"),
+      @ApiResponse(responseCode = "500", description = "Unexpected error")
+  })
   public BaseResponse<Person> register(@RequestBody @Valid RegisterRequest request) {
     return authService.registerUser(request);
   }
@@ -90,7 +99,13 @@ public class AuthController {
    */
   @PostMapping("/refresh")
   @Operation(summary = "Refresh token", description = "Refresh authentication token")
-  public BaseResponse<Map<String, Object>> refreshToken(
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Token refreshed",
+          content = @Content(schema = @Schema(implementation = AuthTokensResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Invalid refresh token"),
+      @ApiResponse(responseCode = "500", description = "Unexpected error")
+  })
+  public BaseResponse<AuthTokensResponse> refreshToken(
       @Parameter(description = "Refresh token") @RequestParam String refreshToken) {
     return authService.refreshToken(refreshToken);
   }
