@@ -68,6 +68,7 @@ mybatis-plus:
 app:
   cors:
     allowed-origins: "http://localhost:3000,http://localhost:8080,https://localhost:3000,https://ffa-aj0b.onrender.com,https://ffa-api.isep.fr"
+  api-base-urls: "http://localhost:8080/ffaAPI,https://ffa-aj0b.onrender.com/ffaAPI"
   jwt:
     secret: 6e8ce58b17be462e3a64de52b87c8e6e5c49739d75fc1472c0a35f4c1f809c3e1d57da6de197d4a8face5320cc5aa2329ee499aee127b0ee4f1ed38e350cb8c6
     expiration: 86400000  # 24 hours in milliseconds
