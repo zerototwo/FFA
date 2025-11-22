@@ -41,4 +41,16 @@ public interface ProjectMapper extends CustomBaseMapper<Project> {
    */
   @Select("SELECT * FROM project WHERE LOWER(description) LIKE CONCAT('%', #{keyword}, '%') AND is_deleted = false")
   List<Project> findByDescriptionLike(String keyword);
+
+  /**
+   * Count projects by intervener ID
+   */
+  @Select("SELECT COUNT(*) FROM project WHERE intervener_id = #{intervenerId} AND is_deleted = false")
+  Long countByIntervenerId(Long intervenerId);
+
+  /**
+   * Count projects created this month by intervener ID
+   */
+  @Select("SELECT COUNT(*) FROM project WHERE intervener_id = #{intervenerId} AND is_deleted = false AND DATE_TRUNC('month', creation_date) = DATE_TRUNC('month', CURRENT_DATE)")
+  Long countByIntervenerIdThisMonth(Long intervenerId);
 }

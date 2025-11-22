@@ -79,13 +79,16 @@ public class PublicController {
     return countryService.searchCountries(keyword, page, size);
   }
 
-  /**
-   * Get countries by continent ID
-   */
+    /**
+     *  Get countries by continent by id
+     * @param continentId  long
+     * @return List<Country>
+     */
   @GetMapping("/countries/continent/{continentId}")
   @Operation(summary = "Get countries by continent", description = "Retrieve countries by continent ID")
   public BaseResponse<List<Country>> getCountriesByContinent(
       @Parameter(description = "Continent ID") @PathVariable Long continentId) {
+
     return countryService.findByContinentId(continentId);
   }
 

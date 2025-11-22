@@ -15,7 +15,7 @@ import java.util.List;
  * Application Service Implementation
  * Implements business logic for application management
  */
-//@Service
+@Service
 public class ApplicationServiceImpl extends BaseServiceImpl<ApplicationMapper, Application>
     implements ApplicationService {
 
@@ -92,5 +92,31 @@ public class ApplicationServiceImpl extends BaseServiceImpl<ApplicationMapper, A
   public BaseResponse<Boolean> hasUserAppliedToProject(Long projectId, Long userId) {
     // TODO: Implement business logic
     return null;
+  }
+
+  @Override
+  public Long countApplicationsForIntervenerProjects(Long intervenerId) {
+    if (intervenerId == null) {
+      return 0L;
+    }
+    return applicationMapper.countApplicationsForIntervenerProjects(intervenerId);
+  }
+
+  @Override
+  public Long countApplicationsForIntervenerProjectsThisWeek(Long intervenerId) {
+    if (intervenerId == null) {
+      return 0L;
+    }
+    return applicationMapper.countApplicationsForIntervenerProjectsThisWeek(intervenerId);
+  }
+
+  @Override
+  public BaseResponse<List<Application>> getRecentApplicationsForIntervener(Long intervenerId, Integer limit) {
+    if (intervenerId == null) {
+      return BaseResponse.error("Intervener ID is required", 400);
+    }
+    int safeLimit = limit != null && limit > 0 ? limit : 10;
+    List<Application> applications = applicationMapper.findRecentApplicationsForIntervener(intervenerId, safeLimit);
+    return BaseResponse.success("Recent applications retrieved", applications);
   }
 }

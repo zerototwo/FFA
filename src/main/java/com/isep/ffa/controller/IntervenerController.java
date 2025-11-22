@@ -2,7 +2,9 @@ package com.isep.ffa.controller;
 
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
+import com.isep.ffa.dto.response.DashboardResponse;
 import com.isep.ffa.entity.*;
+import com.isep.ffa.security.SecurityUtils;
 import com.isep.ffa.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,14 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Intervener Controller
  * Provides REST API endpoints for intervener operations
  * Base path: /ffaAPI/intervener
  */
-// @RestController
+@RestController
 @RequestMapping("/ffaAPI/intervener")
 @Tag(name = "Intervener API", description = "Intervener operations for FFA platform")
 public class IntervenerController {
@@ -37,6 +42,107 @@ public class IntervenerController {
 
   @Autowired
   private AlertService alertService;
+
+  // ==================== DASHBOARD ====================
+
+  /**
+   * Get dashboard statistics and recent activities
+   */
+  @GetMapping("/dashboard")
+  @Operation(summary = "Get dashboard", description = "Retrieve dashboard statistics and recent activities for intervener")
+  public BaseResponse<DashboardResponse> getDashboard() {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+
+    // Get current user
+    Person user = personService.getById(currentUserId);
+    if (user == null) {
+      return BaseResponse.error("User not found", 404);
+    }
+
+    // Get statistics
+    Long myProjectsCount = projectService.countByIntervenerId(currentUserId);
+    Long myProjectsIncreaseThisMonth = projectService.countByIntervenerIdThisMonth(currentUserId);
+    Long applicationsInReviewCount = applicationService.countApplicationsForIntervenerProjects(currentUserId);
+    Long applicationsInReviewIncreaseThisWeek = applicationService.countApplicationsForIntervenerProjectsThisWeek(currentUserId);
+
+    // Pending approvals: projects that need approval (for now, we'll use projects without winner as pending)
+    // This is a simplified logic - you may need to adjust based on actual business requirements
+    Long pendingApprovalsCount = 0L; // TODO: Implement actual pending approvals logic
+
+    DashboardResponse.Statistics statistics = DashboardResponse.Statistics.builder()
+        .myProjectsCount(myProjectsCount)
+        .myProjectsIncreaseThisMonth(myProjectsIncreaseThisMonth)
+        .pendingApprovalsCount(pendingApprovalsCount)
+        .applicationsInReviewCount(applicationsInReviewCount)
+        .applicationsInReviewIncreaseThisWeek(applicationsInReviewIncreaseThisWeek)
+        .build();
+
+    // Get recent activities
+    List<DashboardResponse.ActivityItem> recentActivities = new ArrayList<>();
+    
+    // Get recent projects
+    BaseResponse<List<Project>> projectsResponse = projectService.findByIntervenerId(currentUserId);
+    if (projectsResponse.isSuccess() && projectsResponse.getData() != null) {
+      List<Project> projects = projectsResponse.getData();
+      recentActivities.addAll(projects.stream()
+          .limit(3)
+          .map(project -> DashboardResponse.ActivityItem.builder()
+              .title(project.getName())
+              .date(project.getCreationDate() != null 
+                  ? project.getCreationDate().format(DateTimeFormatter.ISO_LOCAL_DATE) 
+                  : "")
+              .status(project.getWinnerUserId() != null ? "Published" : "Pending Approval")
+              .type("PROJECT")
+              .entityId(project.getId())
+              .build())
+          .collect(Collectors.toList()));
+    }
+
+    // Get recent applications
+    BaseResponse<List<Application>> applicationsResponse = applicationService.getRecentApplicationsForIntervener(currentUserId, 3);
+    if (applicationsResponse.isSuccess() && applicationsResponse.getData() != null) {
+      List<Application> applications = applicationsResponse.getData();
+      recentActivities.addAll(applications.stream()
+          .map(app -> {
+            // Get user information from userId
+            String userName = "User";
+            if (app.getUserId() != null) {
+              Person applicant = personService.getById(app.getUserId());
+              if (applicant != null) {
+                userName = applicant.getFirstName() + " " + applicant.getLastName();
+              }
+            }
+            return DashboardResponse.ActivityItem.builder()
+                .title("Application from " + userName)
+                .date(app.getDateApplication() != null 
+                    ? app.getDateApplication().format(DateTimeFormatter.ISO_LOCAL_DATE) 
+                    : "")
+                .status("Under Review")
+                .type("APPLICATION")
+                .entityId(app.getId())
+                .build();
+          })
+          .collect(Collectors.toList()));
+    }
+
+    // Sort by date (most recent first) and limit to 5
+    recentActivities.sort((a, b) -> b.getDate().compareTo(a.getDate()));
+    if (recentActivities.size() > 5) {
+      recentActivities = recentActivities.subList(0, 5);
+    }
+
+    DashboardResponse dashboard = DashboardResponse.builder()
+        .user(user)
+        .organizationName(user.getOrganizationName())
+        .statistics(statistics)
+        .recentActivities(recentActivities)
+        .build();
+
+    return BaseResponse.success("Dashboard data retrieved successfully", dashboard);
+  }
 
   // ==================== PROJECT MANAGEMENT ====================
 

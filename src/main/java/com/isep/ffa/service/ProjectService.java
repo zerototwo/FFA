@@ -123,4 +123,20 @@ public interface ProjectService extends BaseService<Project> {
    * @return project statistics
    */
   BaseResponse<Object> getProjectStatistics(Long projectId);
+
+  /**
+   * Count projects by intervener ID
+   * 
+   * @param intervenerId intervener ID
+   * @return project count
+   */
+  Long countByIntervenerId(Long intervenerId);
+
+  /**
+   * Count projects created this month by intervener ID
+   * 
+   * @param intervenerId intervener ID
+   * @return project count this month
+   */
+  Long countByIntervenerIdThisMonth(Long intervenerId);
 }

@@ -118,4 +118,29 @@ public interface ApplicationService extends BaseService<Application> {
    * @return application exists or not
    */
   BaseResponse<Boolean> hasUserAppliedToProject(Long projectId, Long userId);
+
+  /**
+   * Count applications for projects by intervener ID
+   * 
+   * @param intervenerId intervener ID
+   * @return application count
+   */
+  Long countApplicationsForIntervenerProjects(Long intervenerId);
+
+  /**
+   * Count applications created this week for projects by intervener ID
+   * 
+   * @param intervenerId intervener ID
+   * @return application count this week
+   */
+  Long countApplicationsForIntervenerProjectsThisWeek(Long intervenerId);
+
+  /**
+   * Get recent applications for intervener projects
+   * 
+   * @param intervenerId intervener ID
+   * @param limit        limit number of results
+   * @return list of recent applications
+   */
+  BaseResponse<List<Application>> getRecentApplicationsForIntervener(Long intervenerId, Integer limit);
 }

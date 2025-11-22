@@ -33,6 +33,32 @@ public interface ApplicationMapper extends CustomBaseMapper<Application> {
   /**
    * Find applications by motivation keyword
    */
-  @Select("SELECT * FROM application WHERE motivation LIKE CONCAT('%', #{keyword}, '%') AND is_deleted = 0")
+  @Select("SELECT * FROM application WHERE LOWER(motivation) LIKE CONCAT('%', #{keyword}, '%') AND is_deleted = false")
   List<Application> findByMotivationLike(String keyword);
+
+  /**
+   * Count applications for projects by intervener ID
+   */
+  @Select("SELECT COUNT(*) FROM application a " +
+      "INNER JOIN project p ON a.project_id = p.id " +
+      "WHERE p.intervener_id = #{intervenerId} AND a.is_deleted = false AND p.is_deleted = false")
+  Long countApplicationsForIntervenerProjects(Long intervenerId);
+
+  /**
+   * Count applications created this week for projects by intervener ID
+   */
+  @Select("SELECT COUNT(*) FROM application a " +
+      "INNER JOIN project p ON a.project_id = p.id " +
+      "WHERE p.intervener_id = #{intervenerId} AND a.is_deleted = false AND p.is_deleted = false " +
+      "AND DATE_TRUNC('week', a.date_application) = DATE_TRUNC('week', CURRENT_DATE)")
+  Long countApplicationsForIntervenerProjectsThisWeek(Long intervenerId);
+
+  /**
+   * Find applications for projects by intervener ID with project details
+   */
+  @Select("SELECT a.* FROM application a " +
+      "INNER JOIN project p ON a.project_id = p.id " +
+      "WHERE p.intervener_id = #{intervenerId} AND a.is_deleted = false AND p.is_deleted = false " +
+      "ORDER BY a.date_application DESC LIMIT #{limit}")
+  List<Application> findRecentApplicationsForIntervener(Long intervenerId, Integer limit);
 }

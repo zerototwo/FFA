@@ -227,4 +227,20 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
         "lastUpdated", project.getLastModificationDate());
     return BaseResponse.success("Project statistics retrieved successfully", stats);
   }
+
+  @Override
+  public Long countByIntervenerId(Long intervenerId) {
+    if (intervenerId == null) {
+      return 0L;
+    }
+    return projectMapper.countByIntervenerId(intervenerId);
+  }
+
+  @Override
+  public Long countByIntervenerIdThisMonth(Long intervenerId) {
+    if (intervenerId == null) {
+      return 0L;
+    }
+    return projectMapper.countByIntervenerIdThisMonth(intervenerId);
+  }
 }
