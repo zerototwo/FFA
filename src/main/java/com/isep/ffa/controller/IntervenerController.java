@@ -427,8 +427,12 @@ public class IntervenerController {
   public BaseResponse<PagedResponse<Message>> getMyMessages(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Get messages where current user is the receiver
+    return messageService.getMessagesByReceiver(currentUserId, page + 1, size);
   }
 
   /**
@@ -439,8 +443,17 @@ public class IntervenerController {
   public BaseResponse<Message> sendMessage(
       @Parameter(description = "Receiver ID") @RequestParam Long receiverId,
       @Parameter(description = "Message content") @RequestParam String content) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    if (receiverId == null) {
+      return BaseResponse.error("Receiver ID is required", 400);
+    }
+    if (currentUserId.equals(receiverId)) {
+      return BaseResponse.error("Cannot send message to yourself", 400);
+    }
+    return messageService.sendMessage(currentUserId, receiverId, content);
   }
 
   /**
@@ -451,8 +464,20 @@ public class IntervenerController {
   public BaseResponse<Message> replyToMessage(
       @Parameter(description = "Original message ID") @PathVariable Long messageId,
       @Parameter(description = "Reply content") @RequestParam String content) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify user is part of the conversation
+    Message originalMessage = messageService.getById(messageId);
+    if (originalMessage == null || Boolean.TRUE.equals(originalMessage.getIsDeleted())) {
+      return BaseResponse.error("Original message not found", 404);
+    }
+    if (!currentUserId.equals(originalMessage.getSenderId()) && 
+        !currentUserId.equals(originalMessage.getReceiverId())) {
+      return BaseResponse.error("You don't have permission to reply to this message", 403);
+    }
+    return messageService.replyToMessage(messageId, currentUserId, content);
   }
 
   /**
@@ -462,8 +487,19 @@ public class IntervenerController {
   @Operation(summary = "Mark message as read", description = "Mark a message as read")
   public BaseResponse<Boolean> markMessageAsRead(
       @Parameter(description = "Message ID") @PathVariable Long messageId) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify user is the receiver
+    Message message = messageService.getById(messageId);
+    if (message == null || Boolean.TRUE.equals(message.getIsDeleted())) {
+      return BaseResponse.error("Message not found", 404);
+    }
+    if (!currentUserId.equals(message.getReceiverId())) {
+      return BaseResponse.error("You don't have permission to mark this message as read", 403);
+    }
+    return messageService.markAsRead(messageId);
   }
 
   /**
@@ -473,8 +509,14 @@ public class IntervenerController {
   @Operation(summary = "Get conversation", description = "Get conversation with a specific user")
   public BaseResponse<List<Message>> getConversation(
       @Parameter(description = "User ID") @PathVariable Long userId) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    if (userId == null) {
+      return BaseResponse.error("User ID is required", 400);
+    }
+    return messageService.findConversation(currentUserId, userId);
   }
 
   // ==================== ALERT MANAGEMENT ====================
@@ -487,8 +529,11 @@ public class IntervenerController {
   public BaseResponse<PagedResponse<Alert>> getMyAlerts(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return alertService.getAlertsByReceiver(currentUserId, page + 1, size);
   }
 
   /**
@@ -498,8 +543,19 @@ public class IntervenerController {
   @Operation(summary = "Mark alert as read", description = "Mark an alert as read")
   public BaseResponse<Boolean> markAlertAsRead(
       @Parameter(description = "Alert ID") @PathVariable Long alertId) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify user is the receiver
+    Alert alert = alertService.getById(alertId);
+    if (alert == null || Boolean.TRUE.equals(alert.getIsDeleted())) {
+      return BaseResponse.error("Alert not found", 404);
+    }
+    if (!currentUserId.equals(alert.getReceiverId())) {
+      return BaseResponse.error("You don't have permission to mark this alert as read", 403);
+    }
+    return alertService.markAsRead(alertId);
   }
 
   /**
@@ -508,8 +564,11 @@ public class IntervenerController {
   @GetMapping("/alerts/unread-count")
   @Operation(summary = "Get unread alerts count", description = "Get count of unread alerts")
   public BaseResponse<Integer> getUnreadAlertsCount() {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return alertService.countUnreadAlerts(currentUserId);
   }
 
   // ==================== PROFILE MANAGEMENT ====================

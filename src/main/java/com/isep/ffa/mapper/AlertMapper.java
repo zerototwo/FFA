@@ -15,12 +15,12 @@ public interface AlertMapper extends CustomBaseMapper<Alert> {
   /**
    * Find alerts by receiver ID
    */
-  @Select("SELECT * FROM alert WHERE receiver_id = #{receiverId} AND is_deleted = 0 ORDER BY alert_date DESC")
+  @Select("SELECT * FROM alert WHERE receiver_id = #{receiverId} AND is_deleted = false ORDER BY alert_date DESC")
   List<Alert> findByReceiverId(Long receiverId);
 
   /**
    * Count unread alerts
    */
-  @Select("SELECT COUNT(*) FROM alert WHERE receiver_id = #{receiverId} AND is_read = 0 AND is_deleted = 0")
+  @Select("SELECT COUNT(*) FROM alert WHERE receiver_id = #{receiverId} AND (is_read = false OR is_read IS NULL) AND is_deleted = false")
   Integer countUnreadAlerts(Long receiverId);
 }
