@@ -43,6 +43,9 @@ public class IntervenerController {
   @Autowired
   private AlertService alertService;
 
+  @Autowired
+  private CityService cityService;
+
   // ==================== DASHBOARD ====================
 
   /**
@@ -68,9 +71,8 @@ public class IntervenerController {
     Long applicationsInReviewCount = applicationService.countApplicationsForIntervenerProjects(currentUserId);
     Long applicationsInReviewIncreaseThisWeek = applicationService.countApplicationsForIntervenerProjectsThisWeek(currentUserId);
 
-    // Pending approvals: projects that need approval (for now, we'll use projects without winner as pending)
-    // This is a simplified logic - you may need to adjust based on actual business requirements
-    Long pendingApprovalsCount = 0L; // TODO: Implement actual pending approvals logic
+    // Pending approvals: projects with PENDING_APPROVAL status
+    Long pendingApprovalsCount = projectService.countPendingApprovalsByIntervenerId(currentUserId);
 
     DashboardResponse.Statistics statistics = DashboardResponse.Statistics.builder()
         .myProjectsCount(myProjectsCount)
@@ -150,23 +152,46 @@ public class IntervenerController {
    * Get my projects
    */
   @GetMapping("/projects")
-  @Operation(summary = "Get my projects", description = "Retrieve paginated list of my projects")
+  @Operation(summary = "Get my projects", description = "Retrieve paginated list of my projects with optional status filter")
   public BaseResponse<PagedResponse<Project>> getMyProjects(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+      @Parameter(description = "Filter by status (DRAFT, PENDING_APPROVAL, PUBLISHED)") @RequestParam(required = false) String status) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     if (currentUserId == null) {
       return BaseResponse.error("User not authenticated", 401);
     }
-    // Convert 0-based page to 1-based for service
-    return projectService.getProjectsByIntervener(currentUserId, page + 1, size);
+    // If status filter is provided, use filtered query
+    if (status != null && !status.trim().isEmpty()) {
+      return projectService.getProjectsByIntervenerAndStatus(currentUserId, status.trim().toUpperCase(), page + 1, size);
+    }
+    // Otherwise, get all projects
+    BaseResponse<PagedResponse<Project>> response = projectService.getProjectsByIntervener(currentUserId, page + 1, size);
+    // Enhance response with application counts and location info
+    if (response.isSuccess() && response.getData() != null) {
+      PagedResponse<Project> pagedData = response.getData();
+      for (Project project : pagedData.getContent()) {
+        // Set default status if null
+        if (project.getStatus() == null) {
+          project.setStatus("DRAFT");
+        }
+        // Load location if available
+        if (project.getLocationId() != null && project.getLocation() == null) {
+          City city = cityService.getById(project.getLocationId());
+          if (city != null) {
+            project.setLocation(city);
+          }
+        }
+      }
+    }
+    return response;
   }
 
   /**
    * Create new project
    */
   @PostMapping("/projects")
-  @Operation(summary = "Create project", description = "Create a new project")
+  @Operation(summary = "Create project", description = "Create a new project. Status will default to DRAFT if not provided.")
   public BaseResponse<Project> createProject(@RequestBody Project project) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     if (currentUserId == null) {
@@ -174,6 +199,10 @@ public class IntervenerController {
     }
     // Set the current user as the intervener
     project.setIntervenerId(currentUserId);
+    // Set default status to DRAFT if not provided
+    if (project.getStatus() == null || project.getStatus().trim().isEmpty()) {
+      project.setStatus("DRAFT");
+    }
     return projectService.createProject(project);
   }
 
@@ -181,7 +210,7 @@ public class IntervenerController {
    * Update my project
    */
   @PutMapping("/projects/{id}")
-  @Operation(summary = "Update project", description = "Update my project information")
+  @Operation(summary = "Update project", description = "Update my project information. Only DRAFT projects can be updated.")
   public BaseResponse<Project> updateProject(
       @Parameter(description = "Project ID") @PathVariable Long id,
       @RequestBody Project project) {
@@ -197,9 +226,21 @@ public class IntervenerController {
     if (!currentUserId.equals(existing.getIntervenerId())) {
       return BaseResponse.error("You don't have permission to update this project", 403);
     }
+    // Only allow editing DRAFT projects
+    String currentStatus = existing.getStatus();
+    if (currentStatus == null) {
+      currentStatus = "DRAFT";
+    }
+    if (!"DRAFT".equals(currentStatus)) {
+      return BaseResponse.error("Only DRAFT projects can be updated. Current status: " + currentStatus, 400);
+    }
     // Set ID and ensure intervener ID is not changed
     project.setId(id);
     project.setIntervenerId(currentUserId);
+    // Preserve status if not provided
+    if (project.getStatus() == null || project.getStatus().trim().isEmpty()) {
+      project.setStatus("DRAFT");
+    }
     return projectService.updateProject(project);
   }
 
@@ -229,7 +270,7 @@ public class IntervenerController {
    * Get project details
    */
   @GetMapping("/projects/{id}")
-  @Operation(summary = "Get project details", description = "Get detailed information about my project")
+  @Operation(summary = "Get project details", description = "Get detailed information about my project including application count")
   public BaseResponse<Project> getProjectDetails(
       @Parameter(description = "Project ID") @PathVariable Long id) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
@@ -244,7 +285,15 @@ public class IntervenerController {
     if (!currentUserId.equals(project.getIntervenerId())) {
       return BaseResponse.error("You don't have permission to view this project", 403);
     }
-    return projectService.getProjectWithDetails(id);
+    BaseResponse<Project> response = projectService.getProjectWithDetails(id);
+    // Enhance with application count and ensure status is set
+    if (response.isSuccess() && response.getData() != null) {
+      Project projectDetails = response.getData();
+      if (projectDetails.getStatus() == null) {
+        projectDetails.setStatus("DRAFT");
+      }
+    }
+    return response;
   }
 
   /**
@@ -415,6 +464,29 @@ public class IntervenerController {
       return BaseResponse.error("You don't have permission to view statistics for this project", 403);
     }
     return projectService.getProjectStatistics(projectId);
+  }
+
+  /**
+   * Change project status
+   */
+  @PutMapping("/projects/{id}/status")
+  @Operation(summary = "Change project status", description = "Change project status (DRAFT -> PENDING_APPROVAL -> PUBLISHED)")
+  public BaseResponse<Boolean> changeProjectStatus(
+      @Parameter(description = "Project ID") @PathVariable Long id,
+      @Parameter(description = "New status (DRAFT, PENDING_APPROVAL, PUBLISHED)") @RequestParam String status) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify project belongs to current user
+    Project project = projectService.getById(id);
+    if (project == null || Boolean.TRUE.equals(project.getIsDeleted())) {
+      return BaseResponse.error("Project not found with ID: " + id, 404);
+    }
+    if (!currentUserId.equals(project.getIntervenerId())) {
+      return BaseResponse.error("You don't have permission to change status for this project", 403);
+    }
+    return projectService.changeProjectStatus(id, status);
   }
 
   // ==================== MESSAGE MANAGEMENT ====================

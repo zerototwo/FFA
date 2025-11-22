@@ -53,4 +53,22 @@ public interface ProjectMapper extends CustomBaseMapper<Project> {
    */
   @Select("SELECT COUNT(*) FROM project WHERE intervener_id = #{intervenerId} AND is_deleted = false AND DATE_TRUNC('month', creation_date) = DATE_TRUNC('month', CURRENT_DATE)")
   Long countByIntervenerIdThisMonth(Long intervenerId);
+
+  /**
+   * Count projects with PENDING_APPROVAL status by intervener ID
+   */
+  @Select("SELECT COUNT(*) FROM project WHERE intervener_id = #{intervenerId} AND status = 'PENDING_APPROVAL' AND is_deleted = false")
+  Long countPendingApprovalsByIntervenerId(Long intervenerId);
+
+  /**
+   * Find projects by intervener ID and status
+   */
+  @Select("SELECT * FROM project WHERE intervener_id = #{intervenerId} AND status = #{status} AND is_deleted = false ORDER BY creation_date DESC")
+  List<Project> findByIntervenerIdAndStatus(Long intervenerId, String status);
+
+  /**
+   * Count applications by project ID
+   */
+  @Select("SELECT COUNT(*) FROM application WHERE project_id = #{projectId} AND is_deleted = false")
+  Long countApplicationsByProjectId(Long projectId);
 }

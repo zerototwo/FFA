@@ -86,4 +86,11 @@ public interface CountryService extends BaseService<Country> {
    * @return list of countries with embassy information
    */
   BaseResponse<List<Country>> getCountriesWithEmbassies();
+
+  /**
+   * Get all countries
+   * 
+   * @return list of all countries
+   */
+  BaseResponse<List<Country>> getAllCountries();
 }

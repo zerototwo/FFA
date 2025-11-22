@@ -267,4 +267,17 @@ public class CountryServiceImpl extends BaseServiceImpl<CountryMapper, Country> 
       return BaseResponse.error("Error getting countries with embassies: " + e.getMessage(), 500);
     }
   }
+
+  @Override
+  public BaseResponse<List<Country>> getAllCountries() {
+    try {
+      List<Country> countries = list();
+      if (countries == null) {
+        countries = List.of();
+      }
+      return BaseResponse.success("Countries retrieved successfully", countries);
+    } catch (Exception e) {
+      return BaseResponse.error("Error getting countries: " + e.getMessage(), 500);
+    }
+  }
 }

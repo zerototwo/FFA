@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import com.isep.ffa.security.SecurityUtils;
 import java.util.List;
 
 /**
@@ -18,7 +18,7 @@ import java.util.List;
  * Provides REST API endpoints for user operations
  * Base path: /ffaAPI/user
  */
-// @RestController
+@RestController
 @RequestMapping("/ffaAPI/user")
 @Tag(name = "User API", description = "User operations for FFA platform")
 public class UserController {
@@ -50,12 +50,11 @@ public class UserController {
    * Get available projects
    */
   @GetMapping("/projects")
-  @Operation(summary = "Get available projects", description = "Retrieve paginated list of available projects")
+  @Operation(summary = "Get available projects", description = "Retrieve paginated list of available projects (PUBLISHED status)")
   public BaseResponse<PagedResponse<Project>> getAvailableProjects(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    return projectService.getAvailableProjects(page, size);
   }
 
   /**
@@ -65,8 +64,7 @@ public class UserController {
   @Operation(summary = "Get project details", description = "Get detailed information about a project")
   public BaseResponse<Project> getProjectDetails(
       @Parameter(description = "Project ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    return projectService.getProjectWithDetails(id);
   }
 
   /**
@@ -78,8 +76,7 @@ public class UserController {
       @Parameter(description = "Search keyword") @RequestParam String keyword,
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    return projectService.searchByDescription(keyword, page, size);
   }
 
   // ==================== APPLICATION MANAGEMENT ====================
@@ -92,8 +89,11 @@ public class UserController {
   public BaseResponse<PagedResponse<Application>> getMyApplications(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return applicationService.getApplicationsByUser(currentUserId, page + 1, size);
   }
 
   /**
@@ -104,8 +104,12 @@ public class UserController {
   public BaseResponse<Application> applyToProject(
       @Parameter(description = "Project ID") @PathVariable Long projectId,
       @Parameter(description = "Motivation letter") @RequestParam String motivation) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Submit application using service method
+    return applicationService.submitApplication(projectId, currentUserId, motivation);
   }
 
   /**
@@ -115,8 +119,19 @@ public class UserController {
   @Operation(summary = "Get application details", description = "Get detailed information about my application")
   public BaseResponse<Application> getApplicationDetails(
       @Parameter(description = "Application ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to current user
+    Application application = applicationService.getById(id);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + id, 404);
+    }
+    if (!currentUserId.equals(application.getUserId())) {
+      return BaseResponse.error("You don't have permission to view this application", 403);
+    }
+    return applicationService.getApplicationWithDetails(id);
   }
 
   /**
@@ -127,8 +142,22 @@ public class UserController {
   public BaseResponse<Application> updateApplication(
       @Parameter(description = "Application ID") @PathVariable Long id,
       @RequestBody Application application) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to current user
+    Application existing = applicationService.getById(id);
+    if (existing == null || Boolean.TRUE.equals(existing.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + id, 404);
+    }
+    if (!currentUserId.equals(existing.getUserId())) {
+      return BaseResponse.error("You don't have permission to update this application", 403);
+    }
+    application.setId(id);
+    application.setUserId(currentUserId);
+    application.setProjectId(existing.getProjectId());
+    return applicationService.updateApplication(application);
   }
 
   /**
@@ -138,8 +167,19 @@ public class UserController {
   @Operation(summary = "Cancel application", description = "Cancel my application")
   public BaseResponse<Boolean> cancelApplication(
       @Parameter(description = "Application ID") @PathVariable Long id) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to current user
+    Application application = applicationService.getById(id);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + id, 404);
+    }
+    if (!currentUserId.equals(application.getUserId())) {
+      return BaseResponse.error("You don't have permission to cancel this application", 403);
+    }
+    return applicationService.deleteApplication(id);
   }
 
   /**
@@ -149,8 +189,11 @@ public class UserController {
   @Operation(summary = "Check if applied", description = "Check if I already applied to a project")
   public BaseResponse<Boolean> hasAppliedToProject(
       @Parameter(description = "Project ID") @PathVariable Long projectId) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return applicationService.hasUserAppliedToProject(projectId, currentUserId);
   }
 
   // ==================== MESSAGE MANAGEMENT ====================
@@ -163,8 +206,11 @@ public class UserController {
   public BaseResponse<PagedResponse<Message>> getMyMessages(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return messageService.getMessagesByReceiver(currentUserId, page + 1, size);
   }
 
   /**
@@ -175,8 +221,14 @@ public class UserController {
   public BaseResponse<Message> sendMessage(
       @Parameter(description = "Receiver ID") @RequestParam Long receiverId,
       @Parameter(description = "Message content") @RequestParam String content) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    if (currentUserId.equals(receiverId)) {
+      return BaseResponse.error("Cannot send message to yourself", 400);
+    }
+    return messageService.sendMessage(currentUserId, receiverId, content);
   }
 
   /**
@@ -187,8 +239,11 @@ public class UserController {
   public BaseResponse<Message> replyToMessage(
       @Parameter(description = "Original message ID") @PathVariable Long messageId,
       @Parameter(description = "Reply content") @RequestParam String content) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return messageService.replyToMessage(messageId, currentUserId, content);
   }
 
   /**
@@ -198,8 +253,19 @@ public class UserController {
   @Operation(summary = "Mark message as read", description = "Mark a message as read")
   public BaseResponse<Boolean> markMessageAsRead(
       @Parameter(description = "Message ID") @PathVariable Long messageId) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify user is the receiver
+    Message message = messageService.getById(messageId);
+    if (message == null || Boolean.TRUE.equals(message.getIsDeleted())) {
+      return BaseResponse.error("Message not found", 404);
+    }
+    if (!currentUserId.equals(message.getReceiverId())) {
+      return BaseResponse.error("You don't have permission to mark this message as read", 403);
+    }
+    return messageService.markAsRead(messageId);
   }
 
   /**
@@ -208,8 +274,11 @@ public class UserController {
   @PutMapping("/messages/read-all")
   @Operation(summary = "Mark all messages as read", description = "Mark all my messages as read")
   public BaseResponse<Boolean> markAllMessagesAsRead() {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return messageService.markAllAsRead(currentUserId);
   }
 
   /**
@@ -219,8 +288,11 @@ public class UserController {
   @Operation(summary = "Get conversation", description = "Get conversation with a specific user")
   public BaseResponse<List<Message>> getConversation(
       @Parameter(description = "User ID") @PathVariable Long userId) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return messageService.findConversation(currentUserId, userId);
   }
 
   /**
@@ -229,8 +301,11 @@ public class UserController {
   @GetMapping("/messages/unread-count")
   @Operation(summary = "Get unread messages count", description = "Get count of unread messages")
   public BaseResponse<Integer> getUnreadMessagesCount() {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return messageService.countUnreadMessages(currentUserId);
   }
 
   // ==================== ALERT MANAGEMENT ====================
@@ -243,8 +318,11 @@ public class UserController {
   public BaseResponse<PagedResponse<Alert>> getMyAlerts(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return alertService.getAlertsByReceiver(currentUserId, page + 1, size);
   }
 
   /**
@@ -254,8 +332,19 @@ public class UserController {
   @Operation(summary = "Mark alert as read", description = "Mark an alert as read")
   public BaseResponse<Boolean> markAlertAsRead(
       @Parameter(description = "Alert ID") @PathVariable Long alertId) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify user is the receiver
+    Alert alert = alertService.getById(alertId);
+    if (alert == null || Boolean.TRUE.equals(alert.getIsDeleted())) {
+      return BaseResponse.error("Alert not found", 404);
+    }
+    if (!currentUserId.equals(alert.getReceiverId())) {
+      return BaseResponse.error("You don't have permission to mark this alert as read", 403);
+    }
+    return alertService.markAsRead(alertId);
   }
 
   /**
@@ -264,8 +353,11 @@ public class UserController {
   @PutMapping("/alerts/read-all")
   @Operation(summary = "Mark all alerts as read", description = "Mark all my alerts as read")
   public BaseResponse<Boolean> markAllAlertsAsRead() {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return alertService.markAllAsRead(currentUserId);
   }
 
   /**
@@ -274,8 +366,11 @@ public class UserController {
   @GetMapping("/alerts/unread-count")
   @Operation(summary = "Get unread alerts count", description = "Get count of unread alerts")
   public BaseResponse<Integer> getUnreadAlertsCount() {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return alertService.countUnreadAlerts(currentUserId);
   }
 
   /**
@@ -285,8 +380,11 @@ public class UserController {
   @Operation(summary = "Get recent alerts", description = "Get recent alerts")
   public BaseResponse<List<Alert>> getRecentAlerts(
       @Parameter(description = "Number of alerts to return") @RequestParam(defaultValue = "5") int limit) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return alertService.getRecentAlerts(currentUserId, limit);
   }
 
   // ==================== PROFILE MANAGEMENT ====================
@@ -297,8 +395,15 @@ public class UserController {
   @GetMapping("/profile")
   @Operation(summary = "Get my profile", description = "Get my profile information")
   public BaseResponse<Person> getMyProfile() {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    Person person = personService.getById(currentUserId);
+    if (person == null) {
+      return BaseResponse.error("User not found", 404);
+    }
+    return BaseResponse.success("Profile retrieved successfully", person);
   }
 
   /**
@@ -307,8 +412,17 @@ public class UserController {
   @PutMapping("/profile")
   @Operation(summary = "Update my profile", description = "Update my profile information")
   public BaseResponse<Person> updateMyProfile(@RequestBody Person person) {
-    // TODO: Implement business logic
-    return null;
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    person.setId(currentUserId);
+    // Prevent changing password through profile update
+    Person existing = personService.getById(currentUserId);
+    if (existing != null) {
+      person.setPassword(existing.getPassword());
+    }
+    return personService.updatePerson(person);
   }
 
   // ==================== REFERENCE DATA ====================
@@ -319,8 +433,7 @@ public class UserController {
   @GetMapping("/countries")
   @Operation(summary = "Get all countries", description = "Retrieve list of all countries")
   public BaseResponse<List<Country>> getAllCountries() {
-    // TODO: Implement business logic
-    return null;
+    return countryService.getAllCountries();
   }
 
   /**
@@ -329,18 +442,16 @@ public class UserController {
   @GetMapping("/countries/with-embassies")
   @Operation(summary = "Get countries with embassies", description = "Retrieve countries that have embassies")
   public BaseResponse<List<Country>> getCountriesWithEmbassies() {
-    // TODO: Implement business logic
-    return null;
+    return countryService.getCountriesWithEmbassies();
   }
 
   /**
    * Get embassies by country
    */
   @GetMapping("/countries/{countryId}/embassies")
-  @Operation(summary = "Get embassies by country", description = "Retrieve embassies for a specific country")
+  @Operation(summary = "Get embassies by country", description = "Retrieve embassies located in a specific country")
   public BaseResponse<List<Embassy>> getEmbassiesByCountry(
       @Parameter(description = "Country ID") @PathVariable Long countryId) {
-    // TODO: Implement business logic
-    return null;
+    return embassyService.findByEmbassyInCountryId(countryId);
   }
 }

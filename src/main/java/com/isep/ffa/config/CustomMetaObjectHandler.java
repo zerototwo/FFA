@@ -1,6 +1,7 @@
 package com.isep.ffa.config;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.isep.ffa.security.SecurityUtils;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
@@ -8,10 +9,11 @@ import java.time.LocalDate;
 
 /**
  * MyBatis-Plus Auto-fill Handler
- * Automatically fills fields like creation time, modification time, etc.
+ * Automatically fills fields like creation time, modification time, creator,
+ * and modifier
  */
-// @Component
-public class CustomMetaObjectHandler implements com.baomidou.mybatisplus.core.handlers.MetaObjectHandler {
+@Component
+public class CustomMetaObjectHandler implements MetaObjectHandler {
 
   @Override
   public void insertFill(MetaObject metaObject) {
@@ -20,11 +22,12 @@ public class CustomMetaObjectHandler implements com.baomidou.mybatisplus.core.ha
     this.strictInsertFill(metaObject, "lastModificationDate", LocalDate.class, LocalDate.now());
     this.strictInsertFill(metaObject, "isDeleted", Boolean.class, false);
 
-    // Can get current user ID here and fill creatorUser field
-    // Long currentUserId = getCurrentUserId();
-    // this.strictInsertFill(metaObject, "creatorUser", Long.class, currentUserId);
-    // this.strictInsertFill(metaObject, "lastModificatorUser", Long.class,
-    // currentUserId);
+    // Get current user ID and fill creator/modifier fields
+    Long currentUserId = getCurrentUserId();
+    if (currentUserId != null) {
+      this.strictInsertFill(metaObject, "creatorUser", Long.class, currentUserId);
+      this.strictInsertFill(metaObject, "lastModificatorUser", Long.class, currentUserId);
+    }
   }
 
   @Override
@@ -32,19 +35,25 @@ public class CustomMetaObjectHandler implements com.baomidou.mybatisplus.core.ha
     // Auto-fill on update
     this.strictUpdateFill(metaObject, "lastModificationDate", LocalDate.class, LocalDate.now());
 
-    // Can get current user ID here and fill lastModificatorUser field
-    // Long currentUserId = getCurrentUserId();
-    // this.strictUpdateFill(metaObject, "lastModificatorUser", Long.class,
-    // currentUserId);
+    // Get current user ID and fill modifier field
+    Long currentUserId = getCurrentUserId();
+    if (currentUserId != null) {
+      this.strictUpdateFill(metaObject, "lastModificatorUser", Long.class, currentUserId);
+    }
   }
 
   /**
-   * Get current user ID
-   * This needs to be implemented according to the actual security framework
+   * Get current user ID from SecurityContext
+   * Returns null if user is not authenticated
    */
   private Long getCurrentUserId() {
-    // TODO: Implement logic to get current user ID
-    // Can get current user information from SecurityContext
-    return 1L; // Temporarily return 1, should actually get from authentication information
+    try {
+      return SecurityUtils.getCurrentUserId();
+    } catch (Exception e) {
+      // If not authenticated or error occurs, return null
+      // This allows the handler to work even when called from non-authenticated
+      // contexts
+      return null;
+    }
   }
 }

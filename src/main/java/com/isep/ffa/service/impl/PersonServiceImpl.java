@@ -77,44 +77,160 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
 
   @Override
   public BaseResponse<Person> findByEmail(String email) {
-    // TODO: Implement business logic
-    return null;
+    if (email == null || email.trim().isEmpty()) {
+      return BaseResponse.error("Email is required", 400);
+    }
+    Person person = personMapper.findByEmail(email.trim());
+    if (person == null) {
+      return BaseResponse.error("Person not found with email: " + email, 404);
+    }
+    enrichPerson(person);
+    return BaseResponse.success("Person found", person);
   }
 
   @Override
   public BaseResponse<Person> findByLogin(String login) {
-    // TODO: Implement business logic
-    return null;
+    if (login == null || login.trim().isEmpty()) {
+      return BaseResponse.error("Login is required", 400);
+    }
+    Person person = personMapper.findByLogin(login.trim());
+    if (person == null) {
+      return BaseResponse.error("Person not found with login: " + login, 404);
+    }
+    enrichPerson(person);
+    return BaseResponse.success("Person found", person);
   }
 
   @Override
   public BaseResponse<List<Person>> findByRoleId(Long roleId) {
-    // TODO: Implement business logic
-    return null;
+    if (roleId == null) {
+      return BaseResponse.error("Role ID is required", 400);
+    }
+    List<Person> persons = personMapper.findByRoleId(roleId);
+    if (persons == null || persons.isEmpty()) {
+      return BaseResponse.success("No persons found with role ID: " + roleId, List.of());
+    }
+    persons.forEach(this::enrichPerson);
+    return BaseResponse.success("Persons found", persons);
   }
 
   @Override
   public BaseResponse<List<Person>> findByCityId(Long cityId) {
-    // TODO: Implement business logic
-    return null;
+    if (cityId == null) {
+      return BaseResponse.error("City ID is required", 400);
+    }
+    List<Person> persons = personMapper.findByCityId(cityId);
+    if (persons == null || persons.isEmpty()) {
+      return BaseResponse.success("No persons found with city ID: " + cityId, List.of());
+    }
+    persons.forEach(this::enrichPerson);
+    return BaseResponse.success("Persons found", persons);
   }
 
   @Override
   public BaseResponse<PagedResponse<Person>> getPersonsByRole(Long roleId, int page, int size) {
-    // TODO: Implement business logic
-    return null;
+    if (roleId == null) {
+      return BaseResponse.error("Role ID is required", 400);
+    }
+    int safePage = Math.max(page, 1);
+    int safeSize = size <= 0 ? 10 : size;
+    
+    List<Person> allPersons = personMapper.findByRoleId(roleId);
+    if (allPersons == null) {
+      allPersons = List.of();
+    }
+    
+    // Manual pagination
+    int start = (safePage - 1) * safeSize;
+    int end = Math.min(start + safeSize, allPersons.size());
+    List<Person> pagedList = start < allPersons.size() ? allPersons.subList(start, end) : List.of();
+    
+    // Enrich persons
+    pagedList.forEach(this::enrichPerson);
+    
+    int totalPages = (int) Math.ceil((double) allPersons.size() / safeSize);
+    PagedResponse<Person> pagedResponse = PagedResponse.of(
+        pagedList,
+        safePage - 1,
+        safeSize,
+        allPersons.size(),
+        totalPages);
+    
+    return BaseResponse.success("Persons retrieved successfully", pagedResponse);
   }
 
   @Override
   public BaseResponse<PagedResponse<Person>> getPersonsByCity(Long cityId, int page, int size) {
-    // TODO: Implement business logic
-    return null;
+    if (cityId == null) {
+      return BaseResponse.error("City ID is required", 400);
+    }
+    int safePage = Math.max(page, 1);
+    int safeSize = size <= 0 ? 10 : size;
+    
+    List<Person> allPersons = personMapper.findByCityId(cityId);
+    if (allPersons == null) {
+      allPersons = List.of();
+    }
+    
+    // Manual pagination
+    int start = (safePage - 1) * safeSize;
+    int end = Math.min(start + safeSize, allPersons.size());
+    List<Person> pagedList = start < allPersons.size() ? allPersons.subList(start, end) : List.of();
+    
+    // Enrich persons
+    pagedList.forEach(this::enrichPerson);
+    
+    int totalPages = (int) Math.ceil((double) allPersons.size() / safeSize);
+    PagedResponse<Person> pagedResponse = PagedResponse.of(
+        pagedList,
+        safePage - 1,
+        safeSize,
+        allPersons.size(),
+        totalPages);
+    
+    return BaseResponse.success("Persons retrieved successfully", pagedResponse);
   }
 
   @Override
   public BaseResponse<PagedResponse<Person>> searchPersons(String keyword, int page, int size) {
-    // TODO: Implement business logic
-    return null;
+    if (keyword == null || keyword.trim().isEmpty()) {
+      return BaseResponse.error("Search keyword is required", 400);
+    }
+    int safePage = Math.max(page, 1);
+    int safeSize = size <= 0 ? 10 : size;
+    
+    // Use MyBatis-Plus QueryWrapper for search
+    QueryWrapper<Person> queryWrapper = new QueryWrapper<>();
+    String searchKeyword = "%" + keyword.trim() + "%";
+    queryWrapper.and(wrapper -> wrapper
+        .like("first_name", searchKeyword)
+        .or()
+        .like("last_name", searchKeyword)
+        .or()
+        .like("email", searchKeyword)
+        .or()
+        .like("login", searchKeyword))
+        .eq("is_deleted", false);
+    
+    // Get total count
+    long total = count(queryWrapper);
+    
+    // Apply pagination
+    queryWrapper.last("LIMIT " + safeSize + " OFFSET " + ((safePage - 1) * safeSize));
+    List<Person> persons = list(queryWrapper);
+    
+    // Enrich persons
+    persons.forEach(this::enrichPerson);
+    
+    int totalPages = (int) Math.ceil((double) total / safeSize);
+    PagedResponse<Person> pagedResponse = PagedResponse.of(
+        persons,
+        safePage - 1,
+        safeSize,
+        total,
+        totalPages);
+    
+    return BaseResponse.success("Persons found", pagedResponse);
   }
 
   @Override
@@ -202,19 +318,61 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
 
   @Override
   public BaseResponse<Boolean> deletePerson(Long id) {
-    // TODO: Implement business logic
-    return null;
+    if (id == null) {
+      return BaseResponse.error("Person ID is required", 400);
+    }
+    Person person = getById(id);
+    if (person == null || Boolean.TRUE.equals(person.getIsDeleted())) {
+      return BaseResponse.error("Person not found with ID: " + id, 404);
+    }
+    boolean deleted = removeById(id);
+    if (!deleted) {
+      return BaseResponse.error("Failed to delete person", 500);
+    }
+    return BaseResponse.success("Person deleted successfully", true);
   }
 
   @Override
   public BaseResponse<Boolean> activatePerson(Long id) {
-    // TODO: Implement business logic
-    return null;
+    if (id == null) {
+      return BaseResponse.error("Person ID is required", 400);
+    }
+    Person person = getById(id);
+    if (person == null) {
+      return BaseResponse.error("Person not found with ID: " + id, 404);
+    }
+    // If person is deleted, restore them (activate)
+    if (Boolean.TRUE.equals(person.getIsDeleted())) {
+      boolean restored = lambdaUpdate()
+          .eq(Person::getId, id)
+          .set(Person::getIsDeleted, false)
+          .update();
+      if (!restored) {
+        return BaseResponse.error("Failed to activate person", 500);
+      }
+      return BaseResponse.success("Person activated successfully", true);
+    }
+    // Person is already active
+    return BaseResponse.success("Person is already active", true);
   }
 
   @Override
   public BaseResponse<Boolean> deactivatePerson(Long id) {
-    // TODO: Implement business logic
-    return null;
+    if (id == null) {
+      return BaseResponse.error("Person ID is required", 400);
+    }
+    Person person = getById(id);
+    if (person == null || Boolean.TRUE.equals(person.getIsDeleted())) {
+      return BaseResponse.error("Person not found with ID: " + id, 404);
+    }
+    // Deactivate by setting is_deleted to true
+    boolean deactivated = lambdaUpdate()
+        .eq(Person::getId, id)
+        .set(Person::getIsDeleted, true)
+        .update();
+    if (!deactivated) {
+      return BaseResponse.error("Failed to deactivate person", 500);
+    }
+    return BaseResponse.success("Person deactivated successfully", true);
   }
 }

@@ -139,4 +139,40 @@ public interface ProjectService extends BaseService<Project> {
    * @return project count this month
    */
   Long countByIntervenerIdThisMonth(Long intervenerId);
+
+  /**
+   * Count pending approval projects by intervener ID
+   * 
+   * @param intervenerId intervener ID
+   * @return pending approval count
+   */
+  Long countPendingApprovalsByIntervenerId(Long intervenerId);
+
+  /**
+   * Get paginated projects by intervener and status
+   * 
+   * @param intervenerId intervener ID
+   * @param status       project status (DRAFT, PENDING_APPROVAL, PUBLISHED)
+   * @param page         page number
+   * @param size         page size
+   * @return paginated projects
+   */
+  BaseResponse<PagedResponse<Project>> getProjectsByIntervenerAndStatus(Long intervenerId, String status, int page, int size);
+
+  /**
+   * Get application count for a project
+   * 
+   * @param projectId project ID
+   * @return application count
+   */
+  Long getApplicationCount(Long projectId);
+
+  /**
+   * Change project status
+   * 
+   * @param projectId project ID
+   * @param newStatus new status (DRAFT, PENDING_APPROVAL, PUBLISHED)
+   * @return operation result
+   */
+  BaseResponse<Boolean> changeProjectStatus(Long projectId, String newStatus);
 }

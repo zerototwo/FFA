@@ -4,15 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
+import com.isep.ffa.entity.City;
 import com.isep.ffa.entity.Project;
 import com.isep.ffa.mapper.ProjectMapper;
+import com.isep.ffa.service.CityService;
 import com.isep.ffa.service.ProjectService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -24,6 +26,9 @@ import org.apache.commons.lang3.StringUtils;
 public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> implements ProjectService {
 
   private final ProjectMapper projectMapper;
+
+  @Autowired
+  private CityService cityService;
 
   public ProjectServiceImpl(ProjectMapper projectMapper) {
     this.projectMapper = projectMapper;
@@ -208,6 +213,17 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
     if (project == null || Boolean.TRUE.equals(project.getIsDeleted())) {
       return BaseResponse.error("Project not found with ID: " + id, 404);
     }
+    // Load location city information if available
+    if (project.getLocationId() != null) {
+      City city = cityService.getById(project.getLocationId());
+      if (city != null) {
+        project.setLocation(city);
+      }
+    }
+    // Set default status if null
+    if (project.getStatus() == null) {
+      project.setStatus("DRAFT");
+    }
     return BaseResponse.success("Project retrieved successfully", project);
   }
 
@@ -242,5 +258,89 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
       return 0L;
     }
     return projectMapper.countByIntervenerIdThisMonth(intervenerId);
+  }
+
+  @Override
+  public Long countPendingApprovalsByIntervenerId(Long intervenerId) {
+    if (intervenerId == null) {
+      return 0L;
+    }
+    return projectMapper.countPendingApprovalsByIntervenerId(intervenerId);
+  }
+
+  @Override
+  public BaseResponse<PagedResponse<Project>> getProjectsByIntervenerAndStatus(Long intervenerId, String status, int page, int size) {
+    if (intervenerId == null) {
+      return BaseResponse.error("Intervener ID is required", 400);
+    }
+    if (StringUtils.isBlank(status)) {
+      return BaseResponse.error("Status is required", 400);
+    }
+    // Validate status
+    if (!status.equals("DRAFT") && !status.equals("PENDING_APPROVAL") && !status.equals("PUBLISHED")) {
+      return BaseResponse.error("Invalid status. Must be DRAFT, PENDING_APPROVAL, or PUBLISHED", 400);
+    }
+    int safePage = normalizePage(page);
+    int safeSize = normalizeSize(size);
+    
+    List<Project> allProjects = projectMapper.findByIntervenerIdAndStatus(intervenerId, status);
+    
+    // Manual pagination
+    int start = (safePage - 1) * safeSize;
+    int end = Math.min(start + safeSize, allProjects.size());
+    List<Project> pagedList = start < allProjects.size() ? allProjects.subList(start, end) : List.of();
+    
+    int totalPages = (int) Math.ceil((double) allProjects.size() / safeSize);
+    PagedResponse<Project> pagedResponse = PagedResponse.of(
+        pagedList,
+        safePage - 1,
+        safeSize,
+        allProjects.size(),
+        totalPages);
+    
+    return BaseResponse.success("Projects retrieved successfully", pagedResponse);
+  }
+
+  @Override
+  public Long getApplicationCount(Long projectId) {
+    if (projectId == null) {
+      return 0L;
+    }
+    return projectMapper.countApplicationsByProjectId(projectId);
+  }
+
+  @Override
+  public BaseResponse<Boolean> changeProjectStatus(Long projectId, String newStatus) {
+    if (projectId == null) {
+      return BaseResponse.error("Project ID is required", 400);
+    }
+    if (StringUtils.isBlank(newStatus)) {
+      return BaseResponse.error("New status is required", 400);
+    }
+    // Validate status
+    if (!newStatus.equals("DRAFT") && !newStatus.equals("PENDING_APPROVAL") && !newStatus.equals("PUBLISHED")) {
+      return BaseResponse.error("Invalid status. Must be DRAFT, PENDING_APPROVAL, or PUBLISHED", 400);
+    }
+    Project project = getById(projectId);
+    if (project == null || Boolean.TRUE.equals(project.getIsDeleted())) {
+      return BaseResponse.error("Project not found with ID: " + projectId, 404);
+    }
+    String currentStatus = project.getStatus();
+    if (currentStatus == null) {
+      currentStatus = "DRAFT";
+    }
+    // Validate status transition
+    if (currentStatus.equals("PUBLISHED") && !newStatus.equals("PUBLISHED")) {
+      return BaseResponse.error("Cannot change status of a published project", 400);
+    }
+    // Update status
+    boolean updated = lambdaUpdate()
+        .eq(Project::getId, projectId)
+        .set(Project::getStatus, newStatus)
+        .update();
+    if (!updated) {
+      return BaseResponse.error("Failed to change project status", 500);
+    }
+    return BaseResponse.success("Project status changed successfully", true);
   }
 }

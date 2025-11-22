@@ -1,9 +1,11 @@
 package com.isep.ffa.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -39,6 +41,34 @@ public class Project {
    */
   @TableField("submission_date")
   private LocalDate submissionDate;
+
+  /**
+   * Project Status (DRAFT, PENDING_APPROVAL, PUBLISHED)
+   */
+  @TableField("status")
+  @Schema(description = "Project status", example = "DRAFT", allowableValues = {"DRAFT", "PENDING_APPROVAL", "PUBLISHED"})
+  private String status;
+
+  /**
+   * Total Budget
+   */
+  @TableField("total_budget")
+  @Schema(description = "Total budget for the project", example = "50000.00")
+  private BigDecimal totalBudget;
+
+  /**
+   * Start Date
+   */
+  @TableField("start_date")
+  @Schema(description = "Project start date", example = "2024-02-01")
+  private LocalDate startDate;
+
+  /**
+   * Location ID (references city table)
+   */
+  @TableField("location_id")
+  @Schema(description = "Location city ID", example = "1")
+  private Long locationId;
 
   /**
    * Intervener ID
@@ -101,4 +131,10 @@ public class Project {
    */
   @TableField(exist = false)
   private List<Application> applications;
+
+  /**
+   * Location city information
+   */
+  @TableField(exist = false)
+  private City location;
 }

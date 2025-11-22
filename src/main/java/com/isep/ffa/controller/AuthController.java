@@ -114,35 +114,32 @@ public class AuthController {
    * Forgot password
    */
   @PostMapping("/forgot-password")
-  @Operation(summary = "Forgot password", description = "Request password reset")
+  @Operation(summary = "Forgot password", description = "Request password reset. In production, this sends an email with a reset link.")
   public BaseResponse<Boolean> forgotPassword(
       @Parameter(description = "Email address") @RequestParam String email) {
-    // TODO: Implement business logic
-    return null;
+    return authService.forgotPassword(email);
   }
 
   /**
    * Reset password
    */
   @PostMapping("/reset-password")
-  @Operation(summary = "Reset password", description = "Reset password with token")
+  @Operation(summary = "Reset password", description = "Reset password with token from email")
   public BaseResponse<Boolean> resetPassword(
       @Parameter(description = "Reset token") @RequestParam String token,
       @Parameter(description = "New password") @RequestParam String newPassword) {
-    // TODO: Implement business logic
-    return null;
+    return authService.resetPassword(token, newPassword);
   }
 
   /**
    * Change password
    */
   @PostMapping("/change-password")
-  @Operation(summary = "Change password", description = "Change current user password")
+  @Operation(summary = "Change password", description = "Change current authenticated user password")
   public BaseResponse<Boolean> changePassword(
       @Parameter(description = "Current password") @RequestParam String currentPassword,
       @Parameter(description = "New password") @RequestParam String newPassword) {
-    // TODO: Implement business logic
-    return null;
+    return authService.changePassword(currentPassword, newPassword);
   }
 
   /**
@@ -158,21 +155,19 @@ public class AuthController {
    * Verify email
    */
   @PostMapping("/verify-email")
-  @Operation(summary = "Verify email", description = "Verify user email address")
+  @Operation(summary = "Verify email", description = "Verify user email address with token from email")
   public BaseResponse<Boolean> verifyEmail(
       @Parameter(description = "Verification token") @RequestParam String token) {
-    // TODO: Implement business logic
-    return null;
+    return authService.verifyEmail(token);
   }
 
   /**
    * Resend verification email
    */
   @PostMapping("/resend-verification")
-  @Operation(summary = "Resend verification email", description = "Resend email verification")
+  @Operation(summary = "Resend verification email", description = "Resend email verification link")
   public BaseResponse<Boolean> resendVerificationEmail(
       @Parameter(description = "Email address") @RequestParam String email) {
-    // TODO: Implement business logic
-    return null;
+    return authService.resendVerificationEmail(email);
   }
 }
