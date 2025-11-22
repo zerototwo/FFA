@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,7 +35,73 @@ public class Application {
    * Application motivation
    */
   @TableField("motivation")
+  @Schema(description = "Application motivation letter", example = "I am interested in this project because...")
   private String motivation;
+
+  /**
+   * Application status (DRAFT, SUBMITTED, REVIEWING, APPROVED, REJECTED)
+   */
+  @TableField("status")
+  @Schema(description = "Application status", example = "DRAFT", allowableValues = { "DRAFT", "SUBMITTED", "REVIEWING",
+      "APPROVED", "REJECTED" })
+  private String status;
+
+  /**
+   * Application title (Step 1: Basics)
+   */
+  @TableField("title")
+  @Schema(description = "Application title", example = "Youth Entrepreneurship Program 2024")
+  private String title;
+
+  /**
+   * Application description (Step 1: Basics)
+   */
+  @TableField("description")
+  @Schema(description = "Application description", example = "A comprehensive program to support young entrepreneurs...")
+  private String description;
+
+  /**
+   * Project scope (Step 2: Scope)
+   */
+  @TableField("scope")
+  @Schema(description = "Project scope and objectives", example = "The project aims to support 50 young entrepreneurs...")
+  private String scope;
+
+  /**
+   * Budget (Step 3: Budget)
+   */
+  @TableField("budget")
+  @Schema(description = "Total budget for the application", example = "50000.00")
+  private BigDecimal budget;
+
+  /**
+   * Start date (Step 1: Basics)
+   */
+  @TableField("start_date")
+  @Schema(description = "Project start date", example = "2024-02-01")
+  private LocalDate startDate;
+
+  /**
+   * End date (Step 1: Basics)
+   */
+  @TableField("end_date")
+  @Schema(description = "Project end date", example = "2024-12-31")
+  private LocalDate endDate;
+
+  /**
+   * Location ID (references city table)
+   */
+  @TableField("location_id")
+  @Schema(description = "Location city ID", example = "1")
+  private Long locationId;
+
+  /**
+   * Current step in the multi-step process (1-5)
+   */
+  @TableField("current_step")
+  @Schema(description = "Current step in the application process", example = "3", allowableValues = { "1", "2", "3",
+      "4", "5" })
+  private Integer currentStep;
 
   /**
    * User ID
@@ -96,4 +164,10 @@ public class Application {
    */
   @TableField(exist = false)
   private List<DocumentsSubmitted> documentsSubmitted;
+
+  /**
+   * Location city information
+   */
+  @TableField(exist = false)
+  private City location;
 }

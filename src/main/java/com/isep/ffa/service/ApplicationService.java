@@ -143,4 +143,41 @@ public interface ApplicationService extends BaseService<Application> {
    * @return list of recent applications
    */
   BaseResponse<List<Application>> getRecentApplicationsForIntervener(Long intervenerId, Integer limit);
+
+  /**
+   * Save application step (multi-step process)
+   * 
+   * @param applicationId application ID (null for new)
+   * @param projectId     project ID
+   * @param userId        user ID
+   * @param step          step number (1-5)
+   * @param data          step data
+   * @return saved application
+   */
+  BaseResponse<Application> saveApplicationStep(Long applicationId, Long projectId, Long userId, Integer step, Object data);
+
+  /**
+   * Save application as draft
+   * 
+   * @param application application data
+   * @return saved draft application
+   */
+  BaseResponse<Application> saveDraft(Application application);
+
+  /**
+   * Get draft application for user and project
+   * 
+   * @param projectId project ID
+   * @param userId    user ID
+   * @return draft application if exists
+   */
+  BaseResponse<Application> getDraftApplication(Long projectId, Long userId);
+
+  /**
+   * Submit application (final submission)
+   * 
+   * @param applicationId application ID
+   * @return submitted application
+   */
+  BaseResponse<Application> submitApplicationFinal(Long applicationId);
 }

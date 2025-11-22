@@ -271,4 +271,228 @@ public class ApplicationServiceImpl extends BaseServiceImpl<ApplicationMapper, A
     List<Application> applications = applicationMapper.findRecentApplicationsForIntervener(intervenerId, safeLimit);
     return BaseResponse.success("Recent applications retrieved", applications);
   }
+
+  @Override
+  public BaseResponse<Application> saveApplicationStep(Long applicationId, Long projectId, Long userId, Integer step, Object data) {
+    if (projectId == null) {
+      return BaseResponse.error("Project ID is required", 400);
+    }
+    if (userId == null) {
+      return BaseResponse.error("User ID is required", 400);
+    }
+    if (step == null || step < 1 || step > 5) {
+      return BaseResponse.error("Step number must be between 1 and 5", 400);
+    }
+
+    Application application;
+    if (applicationId != null) {
+      // Update existing application
+      application = getById(applicationId);
+      if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+        return BaseResponse.error("Application not found with ID: " + applicationId, 404);
+      }
+      if (!userId.equals(application.getUserId())) {
+        return BaseResponse.error("You don't have permission to update this application", 403);
+      }
+      if (!projectId.equals(application.getProjectId())) {
+        return BaseResponse.error("Project ID mismatch", 400);
+      }
+    } else {
+      // Check if draft already exists
+      BaseResponse<Application> draftResponse = getDraftApplication(projectId, userId);
+      if (draftResponse.isSuccess() && draftResponse.getData() != null) {
+        application = draftResponse.getData();
+      } else {
+        // Create new draft application
+        application = new Application();
+        application.setProjectId(projectId);
+        application.setUserId(userId);
+        application.setStatus("DRAFT");
+        application.setCurrentStep(1);
+        application.setDateApplication(LocalDateTime.now());
+      }
+    }
+
+    // Update application based on step
+    if (data instanceof com.isep.ffa.dto.request.ApplicationStepRequest) {
+      com.isep.ffa.dto.request.ApplicationStepRequest request = (com.isep.ffa.dto.request.ApplicationStepRequest) data;
+      
+      // Step 1: Basics
+      if (step == 1) {
+        if (request.getTitle() != null) {
+          application.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+          application.setDescription(request.getDescription());
+        }
+        if (request.getStartDate() != null) {
+          application.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+          application.setEndDate(request.getEndDate());
+        }
+        if (request.getLocationId() != null) {
+          application.setLocationId(request.getLocationId());
+        }
+        application.setCurrentStep(1);
+      }
+      // Step 2: Scope
+      else if (step == 2) {
+        if (request.getScope() != null) {
+          application.setScope(request.getScope());
+        }
+        application.setCurrentStep(2);
+      }
+      // Step 3: Budget
+      else if (step == 3) {
+        if (request.getBudget() != null) {
+          application.setBudget(request.getBudget());
+        }
+        application.setCurrentStep(3);
+      }
+      // Step 4: Documents (handled separately via document upload)
+      else if (step == 4) {
+        application.setCurrentStep(4);
+      }
+      // Step 5: Review and submit
+      else if (step == 5) {
+        application.setCurrentStep(5);
+        if (Boolean.TRUE.equals(request.getSubmit())) {
+          application.setStatus("SUBMITTED");
+          application.setDateApplication(LocalDateTime.now());
+        }
+      }
+    }
+
+    // Save application
+    if (application.getId() == null) {
+      boolean saved = save(application);
+      if (!saved) {
+        return BaseResponse.error("Failed to save application step", 500);
+      }
+    } else {
+      boolean updated = updateById(application);
+      if (!updated) {
+        return BaseResponse.error("Failed to update application step", 500);
+      }
+    }
+
+    return BaseResponse.success("Application step saved successfully", application);
+  }
+
+  @Override
+  public BaseResponse<Application> saveDraft(Application application) {
+    if (application == null) {
+      return BaseResponse.error("Application data is required", 400);
+    }
+    if (application.getProjectId() == null) {
+      return BaseResponse.error("Project ID is required", 400);
+    }
+    if (application.getUserId() == null) {
+      return BaseResponse.error("User ID is required", 400);
+    }
+
+    // Set status to DRAFT if not set
+    if (application.getStatus() == null || application.getStatus().isEmpty()) {
+      application.setStatus("DRAFT");
+    }
+
+    // Set current step if not set
+    if (application.getCurrentStep() == null) {
+      application.setCurrentStep(1);
+    }
+
+    if (application.getId() == null) {
+      // Create new draft
+      if (application.getDateApplication() == null) {
+        application.setDateApplication(LocalDateTime.now());
+      }
+      boolean saved = save(application);
+      if (!saved) {
+        return BaseResponse.error("Failed to save draft application", 500);
+      }
+    } else {
+      // Update existing draft
+      Application existing = getById(application.getId());
+      if (existing == null || Boolean.TRUE.equals(existing.getIsDeleted())) {
+        return BaseResponse.error("Application not found with ID: " + application.getId(), 404);
+      }
+      if (!"DRAFT".equals(existing.getStatus())) {
+        return BaseResponse.error("Only DRAFT applications can be updated", 400);
+      }
+      boolean updated = updateById(application);
+      if (!updated) {
+        return BaseResponse.error("Failed to update draft application", 500);
+      }
+    }
+
+    return BaseResponse.success("Draft application saved successfully", application);
+  }
+
+  @Override
+  public BaseResponse<Application> getDraftApplication(Long projectId, Long userId) {
+    if (projectId == null) {
+      return BaseResponse.error("Project ID is required", 400);
+    }
+    if (userId == null) {
+      return BaseResponse.error("User ID is required", 400);
+    }
+
+    QueryWrapper<Application> wrapper = new QueryWrapper<>();
+    wrapper.eq("project_id", projectId);
+    wrapper.eq("user_id", userId);
+    wrapper.eq("status", "DRAFT");
+    wrapper.eq("is_deleted", false);
+    wrapper.orderByDesc("creation_date");
+    wrapper.last("LIMIT 1");
+
+    Application draft = getOne(wrapper);
+    if (draft == null) {
+      return BaseResponse.error("No draft application found", 404);
+    }
+
+    return BaseResponse.success("Draft application retrieved", draft);
+  }
+
+  @Override
+  public BaseResponse<Application> submitApplicationFinal(Long applicationId) {
+    if (applicationId == null) {
+      return BaseResponse.error("Application ID is required", 400);
+    }
+
+    Application application = getById(applicationId);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + applicationId, 404);
+    }
+
+    if (!"DRAFT".equals(application.getStatus())) {
+      return BaseResponse.error("Only DRAFT applications can be submitted", 400);
+    }
+
+    // Validate required fields before submission
+    if (StringUtils.isBlank(application.getTitle())) {
+      return BaseResponse.error("Title is required for submission", 400);
+    }
+    if (StringUtils.isBlank(application.getDescription())) {
+      return BaseResponse.error("Description is required for submission", 400);
+    }
+    if (application.getStartDate() == null) {
+      return BaseResponse.error("Start date is required for submission", 400);
+    }
+    if (application.getEndDate() == null) {
+      return BaseResponse.error("End date is required for submission", 400);
+    }
+
+    // Update status to SUBMITTED
+    application.setStatus("SUBMITTED");
+    application.setDateApplication(LocalDateTime.now());
+    application.setCurrentStep(5);
+
+    boolean updated = updateById(application);
+    if (!updated) {
+      return BaseResponse.error("Failed to submit application", 500);
+    }
+
+    return BaseResponse.success("Application submitted successfully", application);
+  }
 }

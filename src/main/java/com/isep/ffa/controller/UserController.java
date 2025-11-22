@@ -30,6 +30,9 @@ public class UserController {
   private ApplicationService applicationService;
 
   @Autowired
+  private com.isep.ffa.service.DocumentService documentService;
+
+  @Autowired
   private PersonService personService;
 
   @Autowired
@@ -43,6 +46,9 @@ public class UserController {
 
   @Autowired
   private EmbassyService embassyService;
+
+  @Autowired
+  private com.isep.ffa.service.FileStorageService fileStorageService;
 
   // ==================== PROJECT MANAGEMENT ====================
 
@@ -97,10 +103,10 @@ public class UserController {
   }
 
   /**
-   * Submit application to project
+   * Submit application to project (simple version - for backward compatibility)
    */
   @PostMapping("/projects/{projectId}/apply")
-  @Operation(summary = "Apply to project", description = "Submit application to a project")
+  @Operation(summary = "Apply to project", description = "Submit application to a project (simple version)")
   public BaseResponse<Application> applyToProject(
       @Parameter(description = "Project ID") @PathVariable Long projectId,
       @Parameter(description = "Motivation letter") @RequestParam String motivation) {
@@ -110,6 +116,264 @@ public class UserController {
     }
     // Submit application using service method
     return applicationService.submitApplication(projectId, currentUserId, motivation);
+  }
+
+  /**
+   * Save application step (multi-step process)
+   */
+  @PostMapping("/applications/steps")
+  @Operation(summary = "Save application step", description = "Save a step in the multi-step application process")
+  public BaseResponse<Application> saveApplicationStep(
+      @RequestBody com.isep.ffa.dto.request.ApplicationStepRequest request) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    if (request.getStep() == null || request.getStep() < 1 || request.getStep() > 5) {
+      return BaseResponse.error("Step number must be between 1 and 5", 400);
+    }
+    if (request.getProjectId() == null) {
+      return BaseResponse.error("Project ID is required", 400);
+    }
+
+    // If saveDraft is true, just save as draft
+    if (Boolean.TRUE.equals(request.getSaveDraft())) {
+      Application application = new Application();
+      application.setId(request.getApplicationId());
+      application.setProjectId(request.getProjectId());
+      application.setUserId(currentUserId);
+      application.setStatus("DRAFT");
+      application.setCurrentStep(request.getStep());
+
+      // Set fields based on step
+      if (request.getStep() == 1) {
+        application.setTitle(request.getTitle());
+        application.setDescription(request.getDescription());
+        application.setStartDate(request.getStartDate());
+        application.setEndDate(request.getEndDate());
+        application.setLocationId(request.getLocationId());
+      } else if (request.getStep() == 2) {
+        application.setScope(request.getScope());
+      } else if (request.getStep() == 3) {
+        application.setBudget(request.getBudget());
+      }
+
+      return applicationService.saveDraft(application);
+    }
+
+    // Otherwise, save step normally
+    return applicationService.saveApplicationStep(
+        request.getApplicationId(),
+        request.getProjectId(),
+        currentUserId,
+        request.getStep(),
+        request);
+  }
+
+  /**
+   * Get draft application
+   */
+  @GetMapping("/projects/{projectId}/applications/draft")
+  @Operation(summary = "Get draft application", description = "Get draft application for current user and project")
+  public BaseResponse<Application> getDraftApplication(
+      @Parameter(description = "Project ID") @PathVariable Long projectId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    return applicationService.getDraftApplication(projectId, currentUserId);
+  }
+
+  /**
+   * Submit application (final submission)
+   */
+  @PostMapping("/applications/{applicationId}/submit")
+  @Operation(summary = "Submit application", description = "Submit application for final review (Step 5)")
+  public BaseResponse<Application> submitApplicationFinal(
+      @Parameter(description = "Application ID") @PathVariable Long applicationId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to current user
+    Application application = applicationService.getById(applicationId);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + applicationId, 404);
+    }
+    if (!currentUserId.equals(application.getUserId())) {
+      return BaseResponse.error("You don't have permission to submit this application", 403);
+    }
+    return applicationService.submitApplicationFinal(applicationId);
+  }
+
+  // ==================== DOCUMENT MANAGEMENT ====================
+
+  /**
+   * Get document types for a project
+   */
+  @GetMapping("/projects/{projectId}/document-types")
+  @Operation(summary = "Get document types", description = "Get available document types for a project")
+  public BaseResponse<List<DocumentType>> getDocumentTypes(
+      @Parameter(description = "Project ID") @PathVariable Long projectId) {
+    return documentService.getDocumentTypesByProject(projectId);
+  }
+
+  /**
+   * Get document requirements for a project
+   */
+  @GetMapping("/projects/{projectId}/document-requirements")
+  @Operation(summary = "Get document requirements", description = "Get document requirements for a project")
+  public BaseResponse<List<DocumentsNeedForProject>> getDocumentRequirements(
+      @Parameter(description = "Project ID") @PathVariable Long projectId) {
+    return documentService.getDocumentRequirementsByProject(projectId);
+  }
+
+  /**
+   * Upload document file for application
+   */
+  @PostMapping(value = "/applications/{applicationId}/documents", consumes = "multipart/form-data")
+  @Operation(summary = "Upload document", description = "Upload a document file for an application")
+  public BaseResponse<DocumentsSubmitted> uploadDocument(
+      @Parameter(description = "Application ID") @PathVariable Long applicationId,
+      @Parameter(description = "Document type ID") @RequestParam Long documentTypeId,
+      @Parameter(description = "Document file") @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to current user
+    Application application = applicationService.getById(applicationId);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + applicationId, 404);
+    }
+    if (!currentUserId.equals(application.getUserId())) {
+      return BaseResponse.error("You don't have permission to upload documents for this application", 403);
+    }
+    return documentService.uploadDocumentFile(applicationId, documentTypeId, file);
+  }
+
+  /**
+   * Get documents for application
+   */
+  @GetMapping("/applications/{applicationId}/documents")
+  @Operation(summary = "Get application documents", description = "Get all documents for an application")
+  public BaseResponse<List<DocumentsSubmitted>> getApplicationDocuments(
+      @Parameter(description = "Application ID") @PathVariable Long applicationId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to current user
+    Application application = applicationService.getById(applicationId);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + applicationId, 404);
+    }
+    if (!currentUserId.equals(application.getUserId())) {
+      return BaseResponse.error("You don't have permission to view documents for this application", 403);
+    }
+    return documentService.getDocumentsByApplication(applicationId);
+  }
+
+  /**
+   * Delete document
+   */
+  @DeleteMapping("/documents/{documentId}")
+  @Operation(summary = "Delete document", description = "Delete a document")
+  public BaseResponse<Boolean> deleteDocument(
+      @Parameter(description = "Document ID") @PathVariable Long documentId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Get document to verify ownership
+    BaseResponse<DocumentsSubmitted> docResponse = documentService.getDocumentById(documentId);
+    if (!docResponse.isSuccess() || docResponse.getData() == null) {
+      return BaseResponse.error("Document not found with ID: " + documentId, 404);
+    }
+    DocumentsSubmitted document = docResponse.getData();
+
+    // Verify application belongs to current user
+    Application application = applicationService.getById(document.getApplicationId());
+    if (application == null || !currentUserId.equals(application.getUserId())) {
+      return BaseResponse.error("You don't have permission to delete this document", 403);
+    }
+
+    return documentService.deleteDocument(documentId);
+  }
+
+  /**
+   * Validate required documents for application
+   */
+  @GetMapping("/applications/{applicationId}/documents/validate")
+  @Operation(summary = "Validate required documents", description = "Check if all required documents are uploaded")
+  public BaseResponse<Boolean> validateRequiredDocuments(
+      @Parameter(description = "Application ID") @PathVariable Long applicationId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to current user
+    Application application = applicationService.getById(applicationId);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + applicationId, 404);
+    }
+    if (!currentUserId.equals(application.getUserId())) {
+      return BaseResponse.error("You don't have permission to validate documents for this application", 403);
+    }
+    return documentService.validateRequiredDocuments(applicationId, application.getProjectId());
+  }
+
+  /**
+   * Download document file
+   */
+  @GetMapping("/documents/{documentId}/download")
+  @Operation(summary = "Download document", description = "Download a document file")
+  public org.springframework.http.ResponseEntity<byte[]> downloadDocument(
+      @Parameter(description = "Document ID") @PathVariable Long documentId) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return org.springframework.http.ResponseEntity.status(401).build();
+    }
+    // Get document
+    BaseResponse<DocumentsSubmitted> docResponse = documentService.getDocumentById(documentId);
+    if (!docResponse.isSuccess() || docResponse.getData() == null) {
+      return org.springframework.http.ResponseEntity.notFound().build();
+    }
+    DocumentsSubmitted document = docResponse.getData();
+
+    // Verify application belongs to current user
+    Application application = applicationService.getById(document.getApplicationId());
+    if (application == null || !currentUserId.equals(application.getUserId())) {
+      return org.springframework.http.ResponseEntity.status(403).build();
+    }
+
+    // Get file
+    BaseResponse<byte[]> fileResponse = fileStorageService.getFile(document.getPath());
+    if (!fileResponse.isSuccess() || fileResponse.getData() == null) {
+      return org.springframework.http.ResponseEntity.notFound().build();
+    }
+
+    // Determine content type
+    String contentType = "application/octet-stream";
+    String filename = document.getPath();
+    if (filename != null) {
+      if (filename.endsWith(".pdf")) {
+        contentType = "application/pdf";
+      } else if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+        contentType = "image/jpeg";
+      } else if (filename.endsWith(".png")) {
+        contentType = "image/png";
+      } else if (filename.endsWith(".doc")) {
+        contentType = "application/msword";
+      } else if (filename.endsWith(".docx")) {
+        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      }
+    }
+
+    return org.springframework.http.ResponseEntity.ok()
+        .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+        .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, contentType)
+        .body(fileResponse.getData());
   }
 
   /**
