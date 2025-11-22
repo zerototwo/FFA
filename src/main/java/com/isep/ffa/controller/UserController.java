@@ -2,6 +2,7 @@ package com.isep.ffa.controller;
 
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
+import com.isep.ffa.dto.request.ApplicationStepRequest;
 import com.isep.ffa.entity.*;
 import com.isep.ffa.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +31,7 @@ public class UserController {
   private ApplicationService applicationService;
 
   @Autowired
-  private com.isep.ffa.service.DocumentService documentService;
+  private DocumentService documentService;
 
   @Autowired
   private PersonService personService;
@@ -48,7 +49,7 @@ public class UserController {
   private EmbassyService embassyService;
 
   @Autowired
-  private com.isep.ffa.service.FileStorageService fileStorageService;
+  private FileStorageService fileStorageService;
 
   // ==================== PROJECT MANAGEMENT ====================
 
@@ -124,7 +125,7 @@ public class UserController {
   @PostMapping("/applications/steps")
   @Operation(summary = "Save application step", description = "Save a step in the multi-step application process")
   public BaseResponse<Application> saveApplicationStep(
-      @RequestBody com.isep.ffa.dto.request.ApplicationStepRequest request) {
+      @RequestBody ApplicationStepRequest request) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     if (currentUserId == null) {
       return BaseResponse.error("User not authenticated", 401);
