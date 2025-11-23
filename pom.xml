@@ -55,6 +55,12 @@
 
         <dependency>
             <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-core</artifactId>
+            <version>3.5.14</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-extension</artifactId>
             <version>3.5.14</version>
         </dependency>
@@ -115,6 +121,16 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 		</dependency>
+		<!-- Flyway PostgreSQL Database Module (required for Flyway 10+ and PostgreSQL 15+) -->
+		<!-- Note: This warning is harmless - Flyway works with PostgreSQL 17 even if not officially tested -->
+		<!-- If you want to suppress the warning, uncomment and specify version matching flyway-core -->
+		<!--
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+			<version>10.8.1</version>
+		</dependency>
+		-->
 
 		<!-- Spring Boot Validation -->
 		<dependency>

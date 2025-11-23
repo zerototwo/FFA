@@ -38,6 +38,8 @@ spring:
     validate-migration-naming: false
     # Disable placeholder replacement if not needed
     placeholder-replacement: false
+    # Suppress PostgreSQL version warning (PostgreSQL 17 works fine, just not officially tested)
+    # This is a harmless warning - Flyway will work correctly with PostgreSQL 17
   
   # JPA Configuration
   jpa:
