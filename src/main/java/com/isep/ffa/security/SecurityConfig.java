@@ -45,9 +45,11 @@ public class SecurityConfig {
         .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(authz -> authz
-            // Allow Swagger endpoints (Spring automatically removes context path)
-            .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**",
-                "/webjars/**").permitAll()
+            // Allow Swagger endpoints (include context path for proper matching)
+            .requestMatchers("/ffaAPI/swagger-ui/**", "/ffaAPI/swagger-ui.html", 
+                "/ffaAPI/v3/api-docs/**", "/ffaAPI/swagger-resources/**",
+                "/ffaAPI/webjars/**", "/swagger-ui/**", "/swagger-ui.html", 
+                "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
 
             // Public and auth endpoints
             .requestMatchers("/public/**", "/auth/**").permitAll()

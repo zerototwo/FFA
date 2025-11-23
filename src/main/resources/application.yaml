@@ -170,8 +170,8 @@ springdoc:
   # Cache API docs for faster startup
   cache:
     disabled: false
-  # Delay Swagger initialization until first request (causes harmless cache miss warning on first access)
-  lazy-initialization: true
+  # Disable lazy initialization to avoid 500 errors on first API docs access
+  # lazy-initialization: true
 
 # Logging Configuration
 # Reduced logging levels for production to save memory
