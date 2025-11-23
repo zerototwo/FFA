@@ -24,8 +24,21 @@
 # ---- Build stage -----------------------------------------------------------
 FROM ghcr.io/graalvm/graalvm-community:17 AS build
 
-# Install native-image component
-RUN gu install native-image
+# Install native-image component and Maven
+# GraalVM Community Edition uses Oracle Linux, so we use microdnf
+RUN gu install native-image && \
+    microdnf install -y wget tar gzip && \
+    wget -q https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz && \
+    tar -xzf apache-maven-3.9.6-bin.tar.gz -C /opt && \
+    rm apache-maven-3.9.6-bin.tar.gz && \
+    ln -s /opt/apache-maven-3.9.6 /opt/maven
+
+# Set Maven environment variables
+ENV MAVEN_HOME=/opt/maven
+ENV PATH="${MAVEN_HOME}/bin:${PATH}"
+
+# Verify installations
+RUN mvn --version && native-image --version
 
 WORKDIR /workspace
 
