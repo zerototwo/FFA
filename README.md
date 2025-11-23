@@ -179,25 +179,23 @@ mvn test jacoco:report
 
 ## Docker 构建
 
-项目使用 GraalVM Native Image 构建，生成原生可执行文件：
+项目使用标准 JAR 构建，包含 AOT 优化：
 
 ```bash
-# 构建 Native Image
+# 构建镜像
 docker build -t ffa-platform .
 ```
 
 **特点**:
-- 启动时间: < 100ms（毫秒级）
-- 内存占用: ~50-100MB
-- 构建时间: 10-15 分钟（首次构建较慢）
-- 适用场景: 生产环境（追求极致性能）
-
-**注意**: Native Image 构建需要更多时间和资源，但运行时性能极佳，非常适合 Render 等云平台。
+- 启动时间: 1-2 秒（AOT 优化）
+- 内存占用: ~150-200MB
+- 构建时间: 2-3 分钟
+- 适用场景: 开发、测试、生产环境（包括 Render）
 
 ### 运行容器
 
 ```bash
-# 运行 Native Image 镜像
+# 运行镜像
 docker run -p 8080:8080 ffa-platform
 ```
 
