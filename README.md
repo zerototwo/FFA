@@ -152,6 +152,55 @@ Run with coverage:
 mvn test jacoco:report
 ```
 
+## Render 部署
+
+### 快速部署到 Render
+
+项目已针对 Render 平台优化，支持一键部署：
+
+1. **使用 Render Dashboard**（推荐）
+   - 登录 https://dashboard.render.com
+   - 点击 "New +" → "Web Service"
+   - 连接 Git 仓库
+   - Render 会自动检测 `Dockerfile` 并开始部署
+
+2. **配置环境变量**（可选）
+   - 在 Render Dashboard 的 Environment 标签页中配置
+   - 如果使用 Render PostgreSQL，数据库连接会自动注入
+
+### Render 优化特性
+
+- ✅ 自动检测 Dockerfile
+- ✅ 自动注入 PORT 环境变量
+- ✅ 内存优化（适合免费版 512MB）
+- ✅ AOT 优化启用（更快启动）
+- ✅ 健康检查配置
+- ✅ 自动数据库迁移（Flyway）
+
+## Docker 构建
+
+项目使用 GraalVM Native Image 构建，生成原生可执行文件：
+
+```bash
+# 构建 Native Image
+docker build -t ffa-platform .
+```
+
+**特点**:
+- 启动时间: < 100ms（毫秒级）
+- 内存占用: ~50-100MB
+- 构建时间: 10-15 分钟（首次构建较慢）
+- 适用场景: 生产环境（追求极致性能）
+
+**注意**: Native Image 构建需要更多时间和资源，但运行时性能极佳，非常适合 Render 等云平台。
+
+### 运行容器
+
+```bash
+# 运行 Native Image 镜像
+docker run -p 8080:8080 ffa-platform
+```
+
 ## Deployment
 
 ### Production Environment
@@ -166,6 +215,18 @@ mvn test jacoco:report
    ```bash
    java -jar target/ffa-0.0.1-SNAPSHOT.jar
    ```
+
+### Docker Deployment
+
+使用 Docker 部署（推荐）：
+
+```bash
+# 构建镜像
+docker build -t ffa-platform:latest .
+
+# 运行容器
+docker run -d -p 8080:8080 --name ffa-platform ffa-platform:latest
+```
 
 ## Contributing
 
