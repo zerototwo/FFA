@@ -2,28 +2,72 @@ spring:
   application:
     name: FFA
   
+  # Lazy initialization for faster startup (beans are created on-demand)
+  main:
+    lazy-initialization: true
+  
   # Database Configuration
   datasource:
     url: jdbc:postgresql://dpg-d46v8pre5dus73dkvrng-a.frankfurt-postgres.render.com:5432/ffa_pgsql?sslmode=require
     username: ffa_pgsql_user
     password: gFZdGDkzxhcQCfsaKfxntc9n6EuLBZWT
     driver-class-name: org.postgresql.Driver
+    # Optimize connection pool for faster startup
+    hikari:
+      # Minimum idle connections (reduce for faster startup)
+      minimum-idle: 2
+      # Maximum pool size (reduce for lower memory)
+      maximum-pool-size: 5
+      # Connection timeout (ms)
+      connection-timeout: 30000
+      # Idle timeout (ms)
+      idle-timeout: 600000
+      # Max lifetime (ms)
+      max-lifetime: 1800000
+      # Leak detection threshold (ms) - disable for production
+      leak-detection-threshold: 0
 
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+    # Optimize Flyway for faster startup
+    validate-on-migrate: false  # Skip validation to speed up startup
+    clean-disabled: true
+    # Reduce checksum validation
+    validate-migration-naming: false
+    # Disable placeholder replacement if not needed
+    placeholder-replacement: false
   
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: none  # Disable auto DDL for faster startup (use Flyway instead)
+    show-sql: false  # Disable SQL logging in production to save memory
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false  # Disable SQL formatting to save memory
+        # Disable second-level cache to save memory
+        cache.use_second_level_cache: false
+        cache.use_query_cache: false
+        # Optimize Hibernate for faster startup
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
+        # Disable schema validation for faster startup
+        jpa.provider_disabler_checks: true
+        # Disable unnecessary Hibernate features
+        jdbc.use_get_generated_keys: true
+        # Reduce metadata scanning
+        metadata_builder_contributor: ""
+        # Disable statistics (not needed in production)
+        generate_statistics: false
+        # Disable JMX (not needed)
+        jmx_enabled: false
     open-in-view: false
+    # Delay JPA initialization
+    defer-datasource-initialization: false
   
   # File Upload Configuration
   servlet:
@@ -62,8 +106,8 @@ mybatis-plus:
     map-underscore-to-camel-case: true
     # Enable MyBatis second-level cache
     cache-enabled: false
-    # Print SQL statements
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # Disable SQL logging in production to save memory
+    # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   
   # Security Configuration
   security:
@@ -90,6 +134,28 @@ server:
   port: ${PORT:8080}
   servlet:
     context-path: /ffaAPI
+    # Optimize server for faster startup
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+  # Disable unnecessary features for faster startup
+  compression:
+    enabled: false  # Disable compression to save CPU on startup
+  error:
+    include-stacktrace: never
+    include-message: never
+  # Optimize Tomcat for faster startup
+  tomcat:
+    threads:
+      min-spare: 5  # Reduce minimum threads
+      max: 50  # Reduce maximum threads
+    accept-count: 50  # Reduce accept count
+    max-connections: 200  # Reduce max connections
+    connection-timeout: 20000  # Reduce connection timeout
+    # Disable unnecessary features
+    mbeanregistry:
+      enabled: false  # Disable JMX registry
 
 # Swagger/OpenAPI Configuration
 springdoc:
@@ -98,17 +164,53 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operations-sorter: method
+    # Disable try-it-out for faster startup
+    try-it-out-enabled: false
+    # Lazy load Swagger UI for faster startup
+    enabled: true
   show-actuator: true
+  # Cache API docs for faster startup
+  cache:
+    disabled: false
+  # Delay Swagger initialization until first request
+  lazy-initialization: true
 
 # Logging Configuration
+# Reduced logging levels for production to save memory
 logging:
   level:
-    com.isep.ffa: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    root: INFO
+    com.isep.ffa: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.web: WARN
+    org.apache.tomcat: WARN
 
 # JWT Configuration
 jwt:
   secret: mySecretKey123456789012345678901234567890
   expiration: 86400000 # 24 hours in milliseconds
+
+# Actuator Configuration (optimize for faster startup)
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only expose health endpoint (minimal for faster startup)
+        include: health
+      # Disable base path for faster startup
+      base-path: /actuator
+  endpoint:
+    health:
+      # Simplify health checks
+      probes:
+        enabled: false
+  # Disable JMX (not needed)
+  jmx:
+    exposure:
+      exclude: "*"
+  # Disable metrics collection (optional, can enable if needed)
+  metrics:
+    export:
+      enabled: false
