@@ -3,8 +3,9 @@ spring:
     name: FFA
   
   # Lazy initialization for faster startup (beans are created on-demand)
+  # Disabled for Swagger compatibility - Swagger needs all controllers initialized
   main:
-    lazy-initialization: true
+    lazy-initialization: false
   
   # Database Configuration
   datasource:
@@ -181,6 +182,8 @@ logging:
   level:
     root: INFO
     com.isep.ffa: INFO
+    # Enable DEBUG for Swagger/OpenAPI to troubleshoot 500 errors
+    org.springdoc: DEBUG
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
@@ -188,6 +191,8 @@ logging:
     org.apache.tomcat: WARN
     # Suppress HandlerMappingIntrospector cache miss warnings (harmless, occurs once on first Swagger UI access)
     org.springframework.web.servlet.handler.HandlerMappingIntrospector: ERROR
+    # Enable error logging for exception handlers
+    com.isep.ffa.controller.GlobalExceptionHandler: DEBUG
 
 # JWT Configuration
 jwt:

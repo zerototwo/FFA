@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
    */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<BaseResponse<Object>> handleGenericException(Exception ex, WebRequest request) {
+    // Log the full exception for debugging
+    System.err.println("Exception occurred: " + ex.getClass().getName());
+    System.err.println("Message: " + ex.getMessage());
+    ex.printStackTrace();
+    
     BaseResponse<Object> response = BaseResponse.error(
         "An unexpected error occurred: " + ex.getMessage(),
         HttpStatus.INTERNAL_SERVER_ERROR.value());

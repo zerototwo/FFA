@@ -19,8 +19,9 @@ public class FfaApplication {
 		SpringApplication app = new SpringApplication(FfaApplication.class);
 		// Disable banner for faster startup
 		app.setBannerMode(org.springframework.boot.Banner.Mode.OFF);
-		// Additional startup optimizations
-		app.setLazyInitialization(true);
+		// Disable lazy initialization to avoid Swagger 500 errors
+		// Swagger needs all controllers initialized to generate API docs
+		app.setLazyInitialization(false);
 		app.run(args);
 	}
 }

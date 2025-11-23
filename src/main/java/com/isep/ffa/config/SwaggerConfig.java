@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Configuration
+@org.springframework.context.annotation.Lazy(false) // Disable lazy loading for Swagger to avoid 500 errors
 public class SwaggerConfig {
 
         @Value("${app.api-base-urls:http://localhost:8080/ffaAPI}")
