@@ -34,13 +34,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
       @NonNull FilterChain filterChain) throws ServletException, IOException {
     // Skip JWT filter for Swagger/OpenAPI endpoints to avoid 500 errors
+    // Check both with and without context path for compatibility
     String path = request.getRequestURI();
-    if (path != null && (path.contains("/swagger-ui") || 
-        path.contains("/v3/api-docs") || 
-        path.contains("/swagger-resources") ||
-        path.contains("/webjars"))) {
-      filterChain.doFilter(request, response);
-      return;
+    if (path != null) {
+      String normalizedPath = path.toLowerCase();
+      if (normalizedPath.contains("/swagger-ui") || 
+          normalizedPath.contains("/v3/api-docs") || 
+          normalizedPath.contains("/swagger-resources") ||
+          normalizedPath.contains("/webjars") ||
+          normalizedPath.endsWith("/swagger-ui.html") ||
+          normalizedPath.endsWith("/swagger-ui/index.html")) {
+        filterChain.doFilter(request, response);
+        return;
+      }
     }
     
     try {

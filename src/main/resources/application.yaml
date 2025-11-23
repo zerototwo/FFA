@@ -172,6 +172,8 @@ springdoc:
     disabled: false
   # Disable lazy initialization to avoid 500 errors on first API docs access
   # lazy-initialization: true
+  # Ensure Swagger UI works with context path
+  use-management-port: false
 
 # Logging Configuration
 # Reduced logging levels for production to save memory
