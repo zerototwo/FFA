@@ -55,12 +55,8 @@ spring:
         jdbc.batch_size: 20
         order_inserts: true
         order_updates: true
-        # Disable schema validation for faster startup
-        jpa.provider_disabler_checks: true
         # Disable unnecessary Hibernate features
         jdbc.use_get_generated_keys: true
-        # Reduce metadata scanning
-        metadata_builder_contributor: ""
         # Disable statistics (not needed in production)
         generate_statistics: false
         # Disable JMX (not needed)
