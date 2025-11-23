@@ -23,14 +23,23 @@ public class SwaggerConfig {
 
         @Bean
         public OpenAPI customOpenAPI() {
-                List<Server> servers = Arrays.stream(apiBaseUrls.split(","))
-                                .map(String::trim)
-                                .filter(StringUtils::isNotBlank)
-                                .map(url -> new Server()
-                                                .url(url)
-                                                .description(url.contains("localhost") ? "Development Server"
-                                                                : "Production Server"))
-                                .collect(Collectors.toList());
+                // Safely parse API base URLs with error handling
+                List<Server> servers;
+                try {
+                        servers = Arrays.stream(apiBaseUrls.split(","))
+                                        .map(String::trim)
+                                        .filter(StringUtils::isNotBlank)
+                                        .map(url -> new Server()
+                                                        .url(url)
+                                                        .description(url.contains("localhost") ? "Development Server"
+                                                                        : "Production Server"))
+                                        .collect(Collectors.toList());
+                } catch (Exception e) {
+                        // Fallback to default server if parsing fails
+                        servers = Arrays.asList(new Server()
+                                        .url("http://localhost:8080/ffaAPI")
+                                        .description("Default Server"));
+                }
 
                 return new OpenAPI()
                                 .info(new Info()
