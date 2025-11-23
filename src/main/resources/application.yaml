@@ -170,7 +170,7 @@ springdoc:
   # Cache API docs for faster startup
   cache:
     disabled: false
-  # Delay Swagger initialization until first request
+  # Delay Swagger initialization until first request (causes harmless cache miss warning on first access)
   lazy-initialization: true
 
 # Logging Configuration
@@ -184,6 +184,8 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
     org.springframework.web: WARN
     org.apache.tomcat: WARN
+    # Suppress HandlerMappingIntrospector cache miss warnings (harmless, occurs once on first Swagger UI access)
+    org.springframework.web.servlet.handler.HandlerMappingIntrospector: ERROR
 
 # JWT Configuration
 jwt:
