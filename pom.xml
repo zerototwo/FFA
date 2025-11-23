@@ -260,13 +260,13 @@
 					<imageName>FFA</imageName>
 					<mainClass>com.isep.ffa.FfaApplication</mainClass>
 					<buildArgs>
-						<buildArg>--no-fallback</buildArg>
-						<buildArg>--install-exit-handlers</buildArg>
-						<buildArg>-H:+ReportExceptionStackTraces</buildArg>
-						<buildArg>-H:IncludeResources=application.yaml|application.yml|application.properties</buildArg>
-						<buildArg>-H:IncludeResources=db/migration/.*\.sql</buildArg>
-						<buildArg>-H:IncludeResources=mapper/.*\.xml</buildArg>
-						<buildArg>-H:+AllowVMInspection</buildArg>
+					<buildArg>--no-fallback</buildArg>
+					<buildArg>--install-exit-handlers</buildArg>
+					<buildArg>-H:+ReportExceptionStackTraces</buildArg>
+					<buildArg>-H:IncludeResources=application.yaml|application.yml|application.properties</buildArg>
+					<buildArg>-H:IncludeResources=db/migration/.*\.sql</buildArg>
+					<buildArg>-H:IncludeResources=mapper/.*\.xml</buildArg>
+					<buildArg>--enable-monitoring=heapdump,jfr</buildArg>
 					</buildArgs>
 				</configuration>
 			</plugin>
