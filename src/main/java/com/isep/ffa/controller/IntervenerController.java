@@ -417,6 +417,73 @@ public class IntervenerController {
   }
 
   /**
+   * Approve application
+   */
+  @PutMapping("/applications/{id}/approve")
+  @Operation(summary = "Approve application", description = "Approve an application for my project")
+  public BaseResponse<Application> approveApplication(
+      @Parameter(description = "Application ID") @PathVariable Long id) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to a project owned by current user
+    Application application = applicationService.getById(id);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + id, 404);
+    }
+    Project project = projectService.getById(application.getProjectId());
+    if (project == null || !currentUserId.equals(project.getIntervenerId())) {
+      return BaseResponse.error("You don't have permission to approve this application", 403);
+    }
+    // Update application status to APPROVED
+    application.setStatus("APPROVED");
+    BaseResponse<Application> updateResponse = applicationService.updateApplication(application);
+    if (updateResponse.isSuccess()) {
+      // Send alert to applicant
+      alertService.sendAlert(application.getUserId(), 
+          "Your application for project \"" + project.getName() + "\" has been approved!",
+          "APPLICATION_APPROVED");
+    }
+    return updateResponse;
+  }
+
+  /**
+   * Reject application
+   */
+  @PutMapping("/applications/{id}/reject")
+  @Operation(summary = "Reject application", description = "Reject an application for my project")
+  public BaseResponse<Application> rejectApplication(
+      @Parameter(description = "Application ID") @PathVariable Long id,
+      @Parameter(description = "Rejection reason (optional)") @RequestParam(required = false) String reason) {
+    Long currentUserId = SecurityUtils.getCurrentUserId();
+    if (currentUserId == null) {
+      return BaseResponse.error("User not authenticated", 401);
+    }
+    // Verify application belongs to a project owned by current user
+    Application application = applicationService.getById(id);
+    if (application == null || Boolean.TRUE.equals(application.getIsDeleted())) {
+      return BaseResponse.error("Application not found with ID: " + id, 404);
+    }
+    Project project = projectService.getById(application.getProjectId());
+    if (project == null || !currentUserId.equals(project.getIntervenerId())) {
+      return BaseResponse.error("You don't have permission to reject this application", 403);
+    }
+    // Update application status to REJECTED
+    application.setStatus("REJECTED");
+    BaseResponse<Application> updateResponse = applicationService.updateApplication(application);
+    if (updateResponse.isSuccess()) {
+      // Send alert to applicant
+      String message = "Your application for project \"" + project.getName() + "\" has been rejected.";
+      if (reason != null && !reason.trim().isEmpty()) {
+        message += " Reason: " + reason;
+      }
+      alertService.sendAlert(application.getUserId(), message, "APPLICATION_REJECTED");
+    }
+    return updateResponse;
+  }
+
+  /**
    * Define project winner
    */
   @PostMapping("/projects/{projectId}/winner")
