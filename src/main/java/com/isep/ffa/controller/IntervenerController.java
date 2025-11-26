@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -442,8 +441,7 @@ public class IntervenerController {
     if (updateResponse.isSuccess()) {
       // Send alert to applicant
       alertService.sendAlert(application.getUserId(), 
-          "Your application for project \"" + project.getName() + "\" has been approved!",
-          "APPLICATION_APPROVED");
+          "Your application for project \"" + project.getName() + "\" has been approved!");
     }
     return updateResponse;
   }
@@ -478,7 +476,7 @@ public class IntervenerController {
       if (reason != null && !reason.trim().isEmpty()) {
         message += " Reason: " + reason;
       }
-      alertService.sendAlert(application.getUserId(), message, "APPLICATION_REJECTED");
+      alertService.sendAlert(application.getUserId(), message);
     }
     return updateResponse;
   }
