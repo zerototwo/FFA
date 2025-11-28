@@ -248,10 +248,22 @@ public class IntervenerController {
    * Update my project
    */
   @PutMapping("/projects/{id}")
-  @Operation(summary = "Update project", description = "Update my project information. Only DRAFT projects can be updated.")
+  @Operation(summary = "Update project", description = "Update my project information. Only DRAFT projects can be updated. "
+      +
+      "Required fields: name, description. " +
+      "Optional fields: totalBudget, startDate, submissionDate, locationId. " +
+      "Status cannot be changed through this endpoint (use status change endpoints instead).", security = @SecurityRequirement(name = "bearer-jwt"))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Project updated successfully", content = @Content(schema = @Schema(implementation = ProjectResponse.class))),
+      @ApiResponse(responseCode = "401", description = "User not authenticated"),
+      @ApiResponse(responseCode = "403", description = "You don't have permission to update this project"),
+      @ApiResponse(responseCode = "404", description = "Project not found"),
+      @ApiResponse(responseCode = "400", description = "Only DRAFT projects can be updated or validation error"),
+      @ApiResponse(responseCode = "500", description = "Unexpected error")
+  })
   public BaseResponse<Project> updateProject(
       @Parameter(description = "Project ID") @PathVariable Long id,
-      @RequestBody Project project) {
+      @RequestBody @Valid CreateProjectRequest request) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     if (currentUserId == null) {
       return BaseResponse.error("User not authenticated", 401);
@@ -272,13 +284,20 @@ public class IntervenerController {
     if (!"DRAFT".equals(currentStatus)) {
       return BaseResponse.error("Only DRAFT projects can be updated. Current status: " + currentStatus, 400);
     }
-    // Set ID and ensure intervener ID is not changed
+    // Convert request DTO to Project entity
+    Project project = new Project();
     project.setId(id);
+    project.setName(request.getName());
+    project.setDescription(request.getDescription());
+    project.setTotalBudget(request.getTotalBudget());
+    project.setStartDate(request.getStartDate());
+    project.setSubmissionDate(request.getSubmissionDate());
+    project.setLocationId(request.getLocationId());
+
+    // Ensure intervener ID is not changed and preserve existing status
     project.setIntervenerId(currentUserId);
-    // Preserve status if not provided
-    if (project.getStatus() == null || project.getStatus().trim().isEmpty()) {
-      project.setStatus("DRAFT");
-    }
+    project.setStatus(existing.getStatus() != null ? existing.getStatus() : "DRAFT");
+
     return projectService.updateProject(project);
   }
 

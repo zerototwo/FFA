@@ -121,8 +121,8 @@ app:
   api-base-urls: "http://localhost:8080/ffaAPI,https://ffa-aj0b.onrender.com/ffaAPI"
   jwt:
     secret: 6e8ce58b17be462e3a64de52b87c8e6e5c49739d75fc1472c0a35f4c1f809c3e1d57da6de197d4a8face5320cc5aa2329ee499aee127b0ee4f1ed38e350cb8c6
-    expiration: 86400000  # 24 hours in milliseconds
-    refresh-expiration: 604800000  # 7 days in milliseconds
+    expiration: 604800000  # 7 days in milliseconds (increased from 24 hours for better user experience)
+    refresh-expiration: 2592000000  # 30 days in milliseconds (increased from 7 days)
   file:
     upload-dir: uploads
     max-size: 10485760  # 10MB in bytes
@@ -167,6 +167,10 @@ springdoc:
     try-it-out-enabled: false
     # Lazy load Swagger UI for faster startup
     enabled: true
+    # Enable token persistence in browser localStorage
+    # This will save the authorization token in browser's localStorage
+    # so you don't need to re-enter it after page refresh or app restart
+    persist-authorization: true
   show-actuator: true
   # Cache API docs for faster startup
   cache:

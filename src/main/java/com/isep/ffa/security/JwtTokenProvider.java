@@ -22,10 +22,10 @@ public class JwtTokenProvider {
   private String jwtSecret;
 
   @Value("${app.jwt.expiration:86400000}")
-  private int jwtExpirationInMs;
+  private long jwtExpirationInMs;
 
   @Value("${app.jwt.refresh-expiration:604800000}")
-  private int jwtRefreshExpirationInMs;
+  private long jwtRefreshExpirationInMs;
 
   /**
    * Generate JWT token from authentication

@@ -54,7 +54,7 @@ public class AuthService {
           .accessToken(jwt)
           .refreshToken(refreshToken)
           .tokenType("Bearer")
-          .expiresIn(86400)
+          .expiresIn(604800) // 7 days in seconds (updated to match new expiration)
           .user(person)
           .build();
 
@@ -104,7 +104,7 @@ public class AuthService {
             .accessToken(newAccessToken)
             .refreshToken(newRefreshToken)
             .tokenType("Bearer")
-            .expiresIn(86400)
+            .expiresIn(604800) // 7 days in seconds (updated to match new expiration)
             .user(person.orElse(null))
             .build();
 
@@ -188,8 +188,10 @@ public class AuthService {
 
   /**
    * Request password reset (forgot password)
-   * Note: In a production environment, this should send an email with a reset token.
-   * For now, we'll generate a token and return it (in production, send via email).
+   * Note: In a production environment, this should send an email with a reset
+   * token.
+   * For now, we'll generate a token and return it (in production, send via
+   * email).
    */
   public BaseResponse<Boolean> forgotPassword(String email) {
     try {
