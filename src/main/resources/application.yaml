@@ -194,11 +194,6 @@ logging:
     # Enable error logging for exception handlers
     com.isep.ffa.controller.GlobalExceptionHandler: DEBUG
 
-# JWT Configuration
-jwt:
-  secret: mySecretKey123456789012345678901234567890
-  expiration: 86400000 # 24 hours in milliseconds
-
 # Actuator Configuration (optimize for faster startup)
 management:
   endpoints:
