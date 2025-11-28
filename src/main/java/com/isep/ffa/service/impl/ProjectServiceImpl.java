@@ -117,11 +117,51 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
     }
     int safePage = normalizePage(page);
     int safeSize = normalizeSize(size);
-    Page<Project> pageRequest = new Page<>(safePage + 1L, safeSize);
-    QueryWrapper<Project> wrapper = new QueryWrapper<>();
-    wrapper.eq("intervener_id", intervenerId);
-    Page<Project> result = page(pageRequest, wrapper);
-    return BaseResponse.success("Projects retrieved successfully", toPagedResponse(result));
+
+    // MyBatis-Plus Page uses 1-based page numbers
+    long mybatisPage = safePage + 1L;
+    Page<Project> pageRequest = new Page<>(mybatisPage, safeSize);
+
+    // Create wrapper for count (without ORDER BY - PostgreSQL doesn't allow ORDER
+    // BY in COUNT)
+    QueryWrapper<Project> countWrapper = new QueryWrapper<>();
+    countWrapper.eq("intervener_id", intervenerId);
+    long totalCount = count(countWrapper);
+    System.out
+        .println("DEBUG: Total projects for intervenerId=" + intervenerId + " (before pagination): " + totalCount);
+
+    // Create separate wrapper for data query (with ORDER BY)
+    QueryWrapper<Project> dataWrapper = new QueryWrapper<>();
+    dataWrapper.eq("intervener_id", intervenerId);
+    dataWrapper.orderByDesc("creation_date");
+
+    // Disable automatic count in page() since we already have the count
+    // and to avoid ORDER BY in COUNT query
+    pageRequest.setSearchCount(false);
+    pageRequest.setTotal(totalCount);
+
+    // Debug: Try to get all records without pagination to verify query works
+    List<Project> allProjects = list(dataWrapper);
+    System.out.println("DEBUG: All projects (without pagination): " + allProjects.size());
+    if (!allProjects.isEmpty()) {
+      System.out.println(
+          "DEBUG: First project ID: " + allProjects.get(0).getId() + ", name: " + allProjects.get(0).getName());
+    }
+
+    Page<Project> result = page(pageRequest, dataWrapper);
+
+    // Debug logging
+    System.out.println("DEBUG: Querying projects for intervenerId=" + intervenerId +
+        ", inputPage=" + page + ", safePage=" + safePage + ", mybatisPage=" + mybatisPage + ", size=" + safeSize);
+    System.out.println("DEBUG: Found " + result.getRecords().size() + " projects in page, total=" + result.getTotal() +
+        ", currentPage=" + result.getCurrent() + ", totalPages=" + result.getPages());
+
+    if (result.getRecords().isEmpty() && result.getTotal() > 0) {
+      System.out.println("DEBUG: WARNING - No records returned but total > 0. This might be a pagination issue.");
+    }
+
+    PagedResponse<Project> pagedResponse = toPagedResponse(result);
+    return BaseResponse.success("Projects retrieved successfully", pagedResponse);
   }
 
   @Override
@@ -269,7 +309,8 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
   }
 
   @Override
-  public BaseResponse<PagedResponse<Project>> getProjectsByIntervenerAndStatus(Long intervenerId, String status, int page, int size) {
+  public BaseResponse<PagedResponse<Project>> getProjectsByIntervenerAndStatus(Long intervenerId, String status,
+      int page, int size) {
     if (intervenerId == null) {
       return BaseResponse.error("Intervener ID is required", 400);
     }
@@ -282,14 +323,14 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
     }
     int safePage = normalizePage(page);
     int safeSize = normalizeSize(size);
-    
+
     List<Project> allProjects = projectMapper.findByIntervenerIdAndStatus(intervenerId, status);
-    
+
     // Manual pagination
     int start = (safePage - 1) * safeSize;
     int end = Math.min(start + safeSize, allProjects.size());
     List<Project> pagedList = start < allProjects.size() ? allProjects.subList(start, end) : List.of();
-    
+
     int totalPages = (int) Math.ceil((double) allProjects.size() / safeSize);
     PagedResponse<Project> pagedResponse = PagedResponse.of(
         pagedList,
@@ -297,7 +338,7 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
         safeSize,
         allProjects.size(),
         totalPages);
-    
+
     return BaseResponse.success("Projects retrieved successfully", pagedResponse);
   }
 

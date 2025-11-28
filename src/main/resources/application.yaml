@@ -93,8 +93,8 @@ mybatis-plus:
       logic-delete-value: true
       # Logical not-delete value
       logic-not-delete-value: false
-      # Field strategy
-      field-strategy: not_null
+      # Field strategy - use ignored to return all fields including null values
+      field-strategy: ignored
       # Table name prefix
       table-prefix: ""
     # Enable SQL performance analysis

@@ -161,22 +161,29 @@ public class IntervenerController {
    * Get my projects
    */
   @GetMapping("/projects")
-  @Operation(summary = "Get my projects", description = "Retrieve paginated list of my projects with optional status filter")
+  @Operation(summary = "Get my projects", description = "Retrieve paginated list of my projects with optional status filter", security = @SecurityRequirement(name = "bearer-jwt"))
   public BaseResponse<PagedResponse<Project>> getMyProjects(
       @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
       @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
       @Parameter(description = "Filter by status (DRAFT, PENDING_APPROVAL, PUBLISHED)") @RequestParam(required = false) String status) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
+    System.out
+        .println("DEBUG: getMyProjects called, currentUserId=" + currentUserId + ", page=" + page + ", size=" + size);
     if (currentUserId == null) {
+      System.out.println("DEBUG: User not authenticated, returning 401");
       return BaseResponse.error("User not authenticated", 401);
     }
     // If status filter is provided, use filtered query
+    // Note: page is 0-based, Service expects 0-based and will convert to 1-based
+    // for MyBatis-Plus
     if (status != null && !status.trim().isEmpty()) {
-      return projectService.getProjectsByIntervenerAndStatus(currentUserId, status.trim().toUpperCase(), page + 1,
+      return projectService.getProjectsByIntervenerAndStatus(currentUserId, status.trim().toUpperCase(), page,
           size);
     }
     // Otherwise, get all projects
-    BaseResponse<PagedResponse<Project>> response = projectService.getProjectsByIntervener(currentUserId, page + 1,
+    // Note: page is 0-based, Service expects 0-based and will convert to 1-based
+    // for MyBatis-Plus
+    BaseResponse<PagedResponse<Project>> response = projectService.getProjectsByIntervener(currentUserId, page,
         size);
     // Enhance response with application counts and location info
     if (response.isSuccess() && response.getData() != null) {
