@@ -4,6 +4,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,11 @@ public class SwaggerConfig {
                 return new OpenAPI()
                                 .info(new Info()
                                                 .title("FFA Platform API")
-                                                .description("FFA Platform - Embassy Cooperation Projects Management System")
+                                                .description("FFA Platform - Embassy Cooperation Projects Management System. "
+                                                                +
+                                                                "To use protected endpoints, first authenticate via /auth/login to get a JWT token, "
+                                                                +
+                                                                "then click the 'Authorize' button above and enter: Bearer <your-token>")
                                                 .version("1.0.0")
                                                 .contact(new Contact()
                                                                 .name("FFA Development Team")
@@ -55,6 +60,14 @@ public class SwaggerConfig {
                                                                 .name("MIT License")
                                                                 .url("https://opensource.org/licenses/MIT")))
                                 .servers(servers)
+                                .components(new io.swagger.v3.oas.models.Components()
+                                                .addSecuritySchemes("bearer-jwt",
+                                                                new SecurityScheme()
+                                                                                .type(SecurityScheme.Type.HTTP)
+                                                                                .scheme("bearer")
+                                                                                .bearerFormat("JWT")
+                                                                                .name("Bearer Authentication")
+                                                                                .description("Enter your JWT token. You can get it by calling /auth/login endpoint. Format: Bearer <your-token>")))
                                 .tags(Arrays.asList(
                                                 new Tag().name("Authentication")
                                                                 .description("User authentication and authorization"),

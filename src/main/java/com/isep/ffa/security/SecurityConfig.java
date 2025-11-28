@@ -48,21 +48,21 @@ public class SecurityConfig {
             // Allow Swagger endpoints (Spring Security handles context path automatically)
             // But we also explicitly include context path patterns for Render compatibility
             .requestMatchers(
-                "/swagger-ui/**", 
-                "/swagger-ui.html", 
+                "/swagger-ui/**",
+                "/swagger-ui.html",
                 "/swagger-ui/index.html",
-                "/v3/api-docs/**", 
+                "/v3/api-docs/**",
                 "/v3/api-docs",
                 "/swagger-resources/**",
                 "/webjars/**",
-                "/ffaAPI/swagger-ui/**", 
+                "/ffaAPI/swagger-ui/**",
                 "/ffaAPI/swagger-ui.html",
                 "/ffaAPI/swagger-ui/index.html",
                 "/ffaAPI/v3/api-docs/**",
                 "/ffaAPI/v3/api-docs",
                 "/ffaAPI/swagger-resources/**",
-                "/ffaAPI/webjars/**"
-            ).permitAll()
+                "/ffaAPI/webjars/**")
+            .permitAll()
 
             // Public and auth endpoints
             .requestMatchers("/public/**", "/auth/**").permitAll()
@@ -95,26 +95,32 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
     String allowedOriginsProperty = environment.getProperty("app.cors.allowed-origins", "*");
+
+    // Parse allowed origins
     List<String> allowedOrigins = Arrays.stream(allowedOriginsProperty.split(","))
         .map(String::trim)
         .filter(origin -> !origin.isEmpty())
         .collect(Collectors.toList());
-    configuration.setAllowedOriginPatterns(allowedOrigins);
+
+    // Use allowedOriginPatterns for flexibility (supports wildcards and
+    // credentials)
+    if (allowedOrigins.contains("*")) {
+      // If wildcard is specified, allow all origins
+      configuration.addAllowedOriginPattern("*");
+    } else {
+      // Add specific origins
+      configuration.setAllowedOriginPatterns(allowedOrigins);
+      // Also allow same-origin requests (for Swagger UI on same server)
+      configuration.addAllowedOriginPattern("http://*");
+      configuration.addAllowedOriginPattern("https://*");
+    }
 
     // Allowed HTTP methods
     configuration.setAllowedMethods(Arrays.asList(
         "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
 
-    // Allowed request headers
-    configuration.setAllowedHeaders(Arrays.asList(
-        "*",
-        "Authorization",
-        "Content-Type",
-        "X-Requested-With",
-        "Accept",
-        "Origin",
-        "Access-Control-Request-Method",
-        "Access-Control-Request-Headers"));
+    // Allowed request headers - allow all for Swagger UI compatibility
+    configuration.setAllowedHeaders(Arrays.asList("*"));
 
     // Exposed response headers
     configuration.setExposedHeaders(Arrays.asList(
@@ -123,7 +129,7 @@ public class SecurityConfig {
         "Access-Control-Allow-Headers",
         "Access-Control-Allow-Methods"));
 
-    // Allow credentials
+    // Allow credentials (needed for JWT authentication)
     configuration.setAllowCredentials(true);
 
     // Cache duration for pre-flight requests (seconds)

@@ -2,16 +2,24 @@ package com.isep.ffa.controller;
 
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
+import com.isep.ffa.dto.request.CreateProjectRequest;
 import com.isep.ffa.dto.response.DashboardResponse;
+import com.isep.ffa.dto.response.ProjectResponse;
 import com.isep.ffa.entity.*;
 import com.isep.ffa.security.SecurityUtils;
 import com.isep.ffa.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +76,8 @@ public class IntervenerController {
     Long myProjectsCount = projectService.countByIntervenerId(currentUserId);
     Long myProjectsIncreaseThisMonth = projectService.countByIntervenerIdThisMonth(currentUserId);
     Long applicationsInReviewCount = applicationService.countApplicationsForIntervenerProjects(currentUserId);
-    Long applicationsInReviewIncreaseThisWeek = applicationService.countApplicationsForIntervenerProjectsThisWeek(currentUserId);
+    Long applicationsInReviewIncreaseThisWeek = applicationService
+        .countApplicationsForIntervenerProjectsThisWeek(currentUserId);
 
     // Pending approvals: projects with PENDING_APPROVAL status
     Long pendingApprovalsCount = projectService.countPendingApprovalsByIntervenerId(currentUserId);
@@ -83,7 +92,7 @@ public class IntervenerController {
 
     // Get recent activities
     List<DashboardResponse.ActivityItem> recentActivities = new ArrayList<>();
-    
+
     // Get recent projects
     BaseResponse<List<Project>> projectsResponse = projectService.findByIntervenerId(currentUserId);
     if (projectsResponse.isSuccess() && projectsResponse.getData() != null) {
@@ -92,8 +101,8 @@ public class IntervenerController {
           .limit(3)
           .map(project -> DashboardResponse.ActivityItem.builder()
               .title(project.getName())
-              .date(project.getCreationDate() != null 
-                  ? project.getCreationDate().format(DateTimeFormatter.ISO_LOCAL_DATE) 
+              .date(project.getCreationDate() != null
+                  ? project.getCreationDate().format(DateTimeFormatter.ISO_LOCAL_DATE)
                   : "")
               .status(project.getWinnerUserId() != null ? "Published" : "Pending Approval")
               .type("PROJECT")
@@ -103,7 +112,8 @@ public class IntervenerController {
     }
 
     // Get recent applications
-    BaseResponse<List<Application>> applicationsResponse = applicationService.getRecentApplicationsForIntervener(currentUserId, 3);
+    BaseResponse<List<Application>> applicationsResponse = applicationService
+        .getRecentApplicationsForIntervener(currentUserId, 3);
     if (applicationsResponse.isSuccess() && applicationsResponse.getData() != null) {
       List<Application> applications = applicationsResponse.getData();
       recentActivities.addAll(applications.stream()
@@ -118,8 +128,8 @@ public class IntervenerController {
             }
             return DashboardResponse.ActivityItem.builder()
                 .title("Application from " + userName)
-                .date(app.getDateApplication() != null 
-                    ? app.getDateApplication().format(DateTimeFormatter.ISO_LOCAL_DATE) 
+                .date(app.getDateApplication() != null
+                    ? app.getDateApplication().format(DateTimeFormatter.ISO_LOCAL_DATE)
                     : "")
                 .status("Under Review")
                 .type("APPLICATION")
@@ -162,10 +172,12 @@ public class IntervenerController {
     }
     // If status filter is provided, use filtered query
     if (status != null && !status.trim().isEmpty()) {
-      return projectService.getProjectsByIntervenerAndStatus(currentUserId, status.trim().toUpperCase(), page + 1, size);
+      return projectService.getProjectsByIntervenerAndStatus(currentUserId, status.trim().toUpperCase(), page + 1,
+          size);
     }
     // Otherwise, get all projects
-    BaseResponse<PagedResponse<Project>> response = projectService.getProjectsByIntervener(currentUserId, page + 1, size);
+    BaseResponse<PagedResponse<Project>> response = projectService.getProjectsByIntervener(currentUserId, page + 1,
+        size);
     // Enhance response with application counts and location info
     if (response.isSuccess() && response.getData() != null) {
       PagedResponse<Project> pagedData = response.getData();
@@ -190,18 +202,38 @@ public class IntervenerController {
    * Create new project
    */
   @PostMapping("/projects")
-  @Operation(summary = "Create project", description = "Create a new project. Status will default to DRAFT if not provided.")
-  public BaseResponse<Project> createProject(@RequestBody Project project) {
+  @Operation(summary = "Create project", description = "Create a new project. " +
+      "Required fields: name, description. " +
+      "Optional fields: status (defaults to DRAFT if not provided), totalBudget, startDate, submissionDate, locationId. "
+      +
+      "The intervenerId will be automatically set to the current logged-in user.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(schema = @Schema(implementation = CreateProjectRequest.class))), security = @SecurityRequirement(name = "bearer-jwt"))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Project created successfully", content = @Content(schema = @Schema(implementation = ProjectResponse.class))),
+      @ApiResponse(responseCode = "401", description = "User not authenticated"),
+      @ApiResponse(responseCode = "400", description = "Validation error or missing required fields"),
+      @ApiResponse(responseCode = "500", description = "Unexpected error")
+  })
+  public BaseResponse<Project> createProject(@RequestBody @Valid CreateProjectRequest request) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     if (currentUserId == null) {
       return BaseResponse.error("User not authenticated", 401);
     }
+
+    // Convert request DTO to Project entity
+    Project project = new Project();
+    project.setName(request.getName());
+    project.setDescription(request.getDescription());
+    project.setStatus(request.getStatus() != null && !request.getStatus().trim().isEmpty()
+        ? request.getStatus()
+        : "DRAFT");
+    project.setTotalBudget(request.getTotalBudget());
+    project.setStartDate(request.getStartDate());
+    project.setSubmissionDate(request.getSubmissionDate());
+    project.setLocationId(request.getLocationId());
+
     // Set the current user as the intervener
     project.setIntervenerId(currentUserId);
-    // Set default status to DRAFT if not provided
-    if (project.getStatus() == null || project.getStatus().trim().isEmpty()) {
-      project.setStatus("DRAFT");
-    }
+
     return projectService.createProject(project);
   }
 
@@ -316,7 +348,7 @@ public class IntervenerController {
       List<Project> filteredProjects = pagedData.getContent().stream()
           .filter(p -> currentUserId.equals(p.getIntervenerId()))
           .collect(Collectors.toList());
-      
+
       int totalPages = filteredProjects.isEmpty() ? 0 : (int) Math.ceil((double) filteredProjects.size() / size);
       PagedResponse<Project> filteredPagedData = PagedResponse.of(
           filteredProjects,
@@ -324,7 +356,7 @@ public class IntervenerController {
           size,
           filteredProjects.size(),
           totalPages);
-      
+
       return BaseResponse.success("Projects retrieved successfully", filteredPagedData);
     }
     return searchResult;
@@ -347,16 +379,17 @@ public class IntervenerController {
     // Get all applications for projects owned by current user
     // For now, we'll get a larger limit and manually paginate
     // In production, you might want to add a proper paginated query to the mapper
-    BaseResponse<List<Application>> allAppsResponse = applicationService.getRecentApplicationsForIntervener(currentUserId, 1000);
+    BaseResponse<List<Application>> allAppsResponse = applicationService
+        .getRecentApplicationsForIntervener(currentUserId, 1000);
     if (!allAppsResponse.isSuccess() || allAppsResponse.getData() == null) {
       return BaseResponse.error("Failed to retrieve applications", 500);
     }
-    
+
     List<Application> allApps = allAppsResponse.getData();
     int start = page * size;
     int end = Math.min(start + size, allApps.size());
     List<Application> pagedApps = start < allApps.size() ? allApps.subList(start, end) : List.of();
-    
+
     int totalPages = (int) Math.ceil((double) allApps.size() / size);
     PagedResponse<Application> pagedResponse = PagedResponse.of(
         pagedApps,
@@ -364,7 +397,7 @@ public class IntervenerController {
         size,
         allApps.size(),
         totalPages);
-    
+
     return BaseResponse.success("Applications retrieved successfully", pagedResponse);
   }
 
@@ -440,7 +473,7 @@ public class IntervenerController {
     BaseResponse<Application> updateResponse = applicationService.updateApplication(application);
     if (updateResponse.isSuccess()) {
       // Send alert to applicant
-      alertService.sendAlert(application.getUserId(), 
+      alertService.sendAlert(application.getUserId(),
           "Your application for project \"" + project.getName() + "\" has been approved!");
     }
     return updateResponse;
@@ -610,7 +643,7 @@ public class IntervenerController {
     if (originalMessage == null || Boolean.TRUE.equals(originalMessage.getIsDeleted())) {
       return BaseResponse.error("Original message not found", 404);
     }
-    if (!currentUserId.equals(originalMessage.getSenderId()) && 
+    if (!currentUserId.equals(originalMessage.getSenderId()) &&
         !currentUserId.equals(originalMessage.getReceiverId())) {
       return BaseResponse.error("You don't have permission to reply to this message", 403);
     }
@@ -748,7 +781,7 @@ public class IntervenerController {
     person.setEmail(existing.getEmail());
     person.setPassword(existing.getPassword());
     person.setRoleId(existing.getRoleId());
-    
+
     boolean updated = personService.updateById(person);
     if (!updated) {
       return BaseResponse.error("Failed to update profile", 500);
