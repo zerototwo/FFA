@@ -305,7 +305,14 @@ public class IntervenerController {
    * Delete my project
    */
   @DeleteMapping("/projects/{id}")
-  @Operation(summary = "Delete project", description = "Delete my project")
+  @Operation(summary = "Delete project", description = "Delete my project. Only projects that belong to the current user can be deleted.", security = @SecurityRequirement(name = "bearer-jwt"))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Project deleted successfully"),
+      @ApiResponse(responseCode = "401", description = "User not authenticated"),
+      @ApiResponse(responseCode = "403", description = "You don't have permission to delete this project"),
+      @ApiResponse(responseCode = "404", description = "Project not found"),
+      @ApiResponse(responseCode = "500", description = "Unexpected error")
+  })
   public BaseResponse<Boolean> deleteProject(
       @Parameter(description = "Project ID") @PathVariable Long id) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
