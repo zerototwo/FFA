@@ -82,7 +82,7 @@ public interface PersonService extends BaseService<Person>, UserDetailsService {
    * @param size    page size
    * @return paginated search results
    */
-  BaseResponse<PagedResponse<Person>> searchPersons(String keyword, int page, int size);
+  BaseResponse<PagedResponse<Person>> searchPersons(String keyword, int page, int size, Long roleId);
 
   /**
    * Create new person
@@ -123,4 +123,6 @@ public interface PersonService extends BaseService<Person>, UserDetailsService {
    * @return operation result
    */
   BaseResponse<Boolean> deactivatePerson(Long id);
+
+  BaseResponse<PagedResponse<Person>> getAllPersonsEnriched(int page, int size);
 }
