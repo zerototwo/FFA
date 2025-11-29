@@ -45,7 +45,6 @@ public class AdminController {
   @Autowired
   private RoleService roleService;
 
-  // 1. 新增: 注入 AnnouncementService
   @Autowired
   private AnnouncementService announcementService;
 
@@ -60,7 +59,7 @@ public class AdminController {
     return SecurityUtils.isAdmin();
   }
 
-  // ==================== ANNOUNCEMENT MANAGEMENT (新增部分) ====================
+  // ==================== ANNOUNCEMENT MANAGEMENT====================
 
   /**
    * Get all announcements (List)
@@ -75,7 +74,6 @@ public class AdminController {
           @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
 
     if (!checkAdmin()) return BaseResponse.error("Admin access required", 403);
-    // Service 层通常使用 1-based page index，这里做 +1 处理
     return announcementService.searchAnnouncements(keyword, status, page + 1, size);
   }
 
