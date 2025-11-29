@@ -3,7 +3,6 @@ package com.isep.ffa.controller;
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
 import com.isep.ffa.dto.CountryRequest;
-import com.isep.ffa.dto.CountryResponse;
 import com.isep.ffa.entity.*;
 import com.isep.ffa.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,6 +45,10 @@ public class AdminController {
   @Autowired
   private RoleService roleService;
 
+  // 1. 新增: 注入 AnnouncementService
+  @Autowired
+  private AnnouncementService announcementService;
+
   /**
    * Check if current user is admin
    */
@@ -57,11 +60,74 @@ public class AdminController {
     return SecurityUtils.isAdmin();
   }
 
-  // ==================== PERSON MANAGEMENT ====================
+  // ==================== ANNOUNCEMENT MANAGEMENT (新增部分) ====================
 
   /**
-   * Get all persons with pagination AND role filtering
+   * Get all announcements (List)
+   * URL: GET /ffaAPI/admin/announcements
    */
+  @GetMapping("/announcements")
+  @Operation(summary = "Get all announcements", description = "Retrieve paginated list of announcements")
+  public BaseResponse<PagedResponse<Announcement>> getAnnouncements(
+          @Parameter(description = "Search keyword") @RequestParam(required = false) String keyword,
+          @Parameter(description = "Status filter") @RequestParam(required = false) String status,
+          @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+          @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+
+    if (!checkAdmin()) return BaseResponse.error("Admin access required", 403);
+    // Service 层通常使用 1-based page index，这里做 +1 处理
+    return announcementService.searchAnnouncements(keyword, status, page + 1, size);
+  }
+
+  /**
+   * Create announcement
+   * URL: POST /ffaAPI/admin/announcements
+   */
+  @PostMapping("/announcements")
+  @Operation(summary = "Create announcement", description = "Create a new announcement (Draft or Published)")
+  public BaseResponse<Announcement> createAnnouncement(@RequestBody Announcement announcement) {
+    if (!checkAdmin()) return BaseResponse.error("Admin access required", 403);
+    return announcementService.createAnnouncement(announcement);
+  }
+
+  /**
+   * Update announcement
+   * URL: PUT /ffaAPI/admin/announcements/{id}
+   */
+  @PutMapping("/announcements/{id}")
+  @Operation(summary = "Update announcement")
+  public BaseResponse<Announcement> updateAnnouncement(
+          @PathVariable Long id,
+          @RequestBody Announcement announcement) {
+    if (!checkAdmin()) return BaseResponse.error("Admin access required", 403);
+    announcement.setId(id);
+    return announcementService.updateAnnouncement(announcement);
+  }
+
+  /**
+   * Delete announcement
+   * URL: DELETE /ffaAPI/admin/announcements/{id}
+   */
+  @DeleteMapping("/announcements/{id}")
+  @Operation(summary = "Delete announcement")
+  public BaseResponse<Boolean> deleteAnnouncement(@PathVariable Long id) {
+    if (!checkAdmin()) return BaseResponse.error("Admin access required", 403);
+    return announcementService.deleteAnnouncement(id);
+  }
+
+  /**
+   * Publish announcement (Optional specific endpoint)
+   * URL: POST /ffaAPI/admin/announcements/{id}/publish
+   */
+  @PostMapping("/announcements/{id}/publish")
+  @Operation(summary = "Publish announcement")
+  public BaseResponse<Boolean> publishAnnouncement(@PathVariable Long id) {
+    if (!checkAdmin()) return BaseResponse.error("Admin access required", 403);
+    return announcementService.publishAnnouncement(id);
+  }
+
+  // ==================== PERSON MANAGEMENT ====================
+
   @GetMapping("/persons")
   @Operation(summary = "Get all persons", description = "Retrieve paginated list of persons, optionally filtered by role")
   public BaseResponse<PagedResponse<Person>> getAllPersons(
@@ -80,11 +146,6 @@ public class AdminController {
     }
   }
 
-
-
-  /**
-   * Get person by ID
-   */
   @GetMapping("/persons/{id}")
   @Operation(summary = "Get person by ID", description = "Retrieve person information by ID")
   public BaseResponse<Person> getPersonById(
@@ -99,9 +160,6 @@ public class AdminController {
     return BaseResponse.success("Person found", person);
   }
 
-  /**
-   * Create new person
-   */
   @PostMapping("/persons")
   @Operation(summary = "Create person", description = "Create a new person")
   public BaseResponse<Person> createPerson(@RequestBody Person person) {
@@ -111,9 +169,6 @@ public class AdminController {
     return personService.createPerson(person);
   }
 
-  /**
-   * Update person
-   */
   @PutMapping("/persons/{id}")
   @Operation(summary = "Update person", description = "Update person information")
   public BaseResponse<Person> updatePerson(
@@ -126,9 +181,6 @@ public class AdminController {
     return personService.updatePerson(person);
   }
 
-  /**
-   * Delete person
-   */
   @DeleteMapping("/persons/{id}")
   @Operation(summary = "Delete person", description = "Delete person by ID")
   public BaseResponse<Boolean> deletePerson(
@@ -139,12 +191,6 @@ public class AdminController {
     return personService.deletePerson(id);
   }
 
-  /**
-   * Search persons
-   */
-  /**
-   * Search persons
-   */
   @GetMapping("/persons/search")
   @Operation(summary = "Search persons", description = "Search persons by keyword with optional role filter")
   public BaseResponse<PagedResponse<Person>> searchPersons(
@@ -162,9 +208,6 @@ public class AdminController {
 
   // ==================== COUNTRY MANAGEMENT ====================
 
-  /**
-   * Get all countries
-   */
   @GetMapping("/countries")
   @Operation(summary = "Get all countries", description = "Retrieve paginated list of all countries")
   public BaseResponse<PagedResponse<Country>> getAllCountries(
@@ -177,16 +220,12 @@ public class AdminController {
     return BaseResponse.success("Countries retrieved successfully", pagedResponse);
   }
 
-  /**
-   * Create new country
-   */
   @PostMapping("/countries")
   @Operation(summary = "Create country", description = "Create a new country")
   public BaseResponse<Country> createCountry(@RequestBody CountryRequest countryRequest) {
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
-    // Convert DTO to Entity
     Country country = new Country();
     country.setName(countryRequest.getName());
     country.setPhoneNumberIndicator(countryRequest.getPhoneNumberIndicator());
@@ -195,9 +234,6 @@ public class AdminController {
     return countryService.createCountry(country);
   }
 
-  /**
-   * Update country
-   */
   @PutMapping("/countries/{id}")
   @Operation(summary = "Update country", description = "Update country information")
   public BaseResponse<Country> updateCountry(
@@ -206,7 +242,6 @@ public class AdminController {
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
-    // Convert DTO to Entity
     Country country = new Country();
     country.setId(id);
     country.setName(countryRequest.getName());
@@ -216,9 +251,6 @@ public class AdminController {
     return countryService.updateCountry(country);
   }
 
-  /**
-   * Delete country
-   */
   @DeleteMapping("/countries/{id}")
   @Operation(summary = "Delete country", description = "Delete country by ID")
   public BaseResponse<Boolean> deleteCountry(
@@ -231,9 +263,6 @@ public class AdminController {
 
   // ==================== EMBASSY MANAGEMENT ====================
 
-  /**
-   * Get all embassies
-   */
   @GetMapping("/embassies")
   @Operation(summary = "Get all embassies", description = "Retrieve paginated list of all embassies")
   public BaseResponse<PagedResponse<Embassy>> getAllEmbassies(
@@ -246,9 +275,6 @@ public class AdminController {
     return BaseResponse.success("Embassies retrieved successfully", embassies);
   }
 
-  /**
-   * Create new embassy
-   */
   @PostMapping("/embassies")
   @Operation(summary = "Create embassy", description = "Create a new embassy")
   public BaseResponse<Embassy> createEmbassy(@RequestBody Embassy embassy) {
@@ -258,9 +284,6 @@ public class AdminController {
     return embassyService.createEmbassy(embassy);
   }
 
-  /**
-   * Update embassy
-   */
   @PutMapping("/embassies/{id}")
   @Operation(summary = "Update embassy", description = "Update embassy information")
   public BaseResponse<Embassy> updateEmbassy(
@@ -273,9 +296,6 @@ public class AdminController {
     return embassyService.updateEmbassy(embassy);
   }
 
-  /**
-   * Delete embassy
-   */
   @DeleteMapping("/embassies/{id}")
   @Operation(summary = "Delete embassy", description = "Delete embassy by ID")
   public BaseResponse<Boolean> deleteEmbassy(
@@ -288,9 +308,6 @@ public class AdminController {
 
   // ==================== PROJECT MANAGEMENT ====================
 
-  /**
-   * Get all projects
-   */
   @GetMapping("/projects")
   @Operation(summary = "Get all projects", description = "Retrieve paginated list of all projects")
   public BaseResponse<PagedResponse<Project>> getAllProjects(
@@ -303,9 +320,6 @@ public class AdminController {
     return BaseResponse.success("Projects retrieved successfully", projects);
   }
 
-  /**
-   * Search projects
-   */
   @GetMapping("/projects/search")
   @Operation(summary = "Search projects", description = "Search projects by keyword")
   public BaseResponse<PagedResponse<Project>> searchProjects(
@@ -318,9 +332,6 @@ public class AdminController {
     return projectService.searchByDescription(keyword, page, size);
   }
 
-  /**
-   * Create new project
-   */
   @PostMapping("/projects")
   @Operation(summary = "Create project", description = "Create a new project")
   public BaseResponse<Project> createProject(@RequestBody Project project) {
@@ -330,9 +341,6 @@ public class AdminController {
     return projectService.createProject(project);
   }
 
-  /**
-   * Update project
-   */
   @PutMapping("/projects/{id}")
   @Operation(summary = "Update project", description = "Update project information")
   public BaseResponse<Project> updateProject(
@@ -345,9 +353,6 @@ public class AdminController {
     return projectService.updateProject(project);
   }
 
-  /**
-   * Delete project
-   */
   @DeleteMapping("/projects/{id}")
   @Operation(summary = "Delete project", description = "Delete project by ID")
   public BaseResponse<Boolean> deleteProject(
@@ -358,9 +363,6 @@ public class AdminController {
     return projectService.deleteProject(id);
   }
 
-  /**
-   * Get project by ID
-   */
   @GetMapping("/projects/{id:\\d+}")
   @Operation(summary = "Get project by ID", description = "Retrieve project information by ID")
   public BaseResponse<Project> getProjectById(
@@ -371,9 +373,6 @@ public class AdminController {
     return projectService.getProjectWithDetails(id);
   }
 
-  /**
-   * Define project winner
-   */
   @PostMapping("/projects/{id}/winner")
   @Operation(summary = "Define project winner", description = "Define winner for a project")
   public BaseResponse<Boolean> defineProjectWinner(
@@ -385,9 +384,6 @@ public class AdminController {
     return projectService.defineWinner(id, winnerUserId);
   }
 
-  /**
-   * Get project statistics
-   */
   @GetMapping("/projects/{id}/statistics")
   @Operation(summary = "Get project statistics", description = "Get statistics for a project")
   public BaseResponse<Object> getProjectStatistics(
@@ -400,9 +396,6 @@ public class AdminController {
 
   // ==================== APPLICATION MANAGEMENT ====================
 
-  /**
-   * Get all applications
-   */
   @GetMapping("/applications")
   @Operation(summary = "Get all applications", description = "Retrieve paginated list of all applications")
   public BaseResponse<PagedResponse<Application>> getAllApplications(
@@ -415,9 +408,6 @@ public class AdminController {
     return BaseResponse.success("Applications retrieved successfully", applications);
   }
 
-  /**
-   * Get applications by project
-   */
   @GetMapping("/projects/{projectId}/applications")
   @Operation(summary = "Get applications by project", description = "Retrieve applications for a specific project")
   public BaseResponse<PagedResponse<Application>> getApplicationsByProject(
@@ -432,9 +422,6 @@ public class AdminController {
 
   // ==================== CITY MANAGEMENT ====================
 
-  /**
-   * Get all cities
-   */
   @GetMapping("/cities")
   @Operation(summary = "Get all cities", description = "Retrieve paginated list of all cities")
   public BaseResponse<PagedResponse<City>> getAllCities(
@@ -447,9 +434,6 @@ public class AdminController {
     return BaseResponse.success("Cities retrieved successfully", cities);
   }
 
-  /**
-   * Create new city
-   */
   @PostMapping("/cities")
   @Operation(summary = "Create city", description = "Create a new city")
   public BaseResponse<City> createCity(@RequestBody City city) {
@@ -459,9 +443,6 @@ public class AdminController {
     return cityService.createCity(city);
   }
 
-  /**
-   * Update city
-   */
   @PutMapping("/cities/{id}")
   @Operation(summary = "Update city", description = "Update city information")
   public BaseResponse<City> updateCity(
@@ -474,9 +455,6 @@ public class AdminController {
     return cityService.updateCity(city);
   }
 
-  /**
-   * Delete city
-   */
   @DeleteMapping("/cities/{id}")
   @Operation(summary = "Delete city", description = "Delete city by ID")
   public BaseResponse<Boolean> deleteCity(
@@ -489,9 +467,6 @@ public class AdminController {
 
   // ==================== ROLE MANAGEMENT ====================
 
-  /**
-   * Get all roles
-   */
   @GetMapping("/roles")
   @Operation(summary = "Get all roles", description = "Retrieve list of all roles")
   public BaseResponse<List<Role>> getAllRoles() {
@@ -501,9 +476,6 @@ public class AdminController {
     return roleService.getAllRoles();
   }
 
-  /**
-   * Create new role
-   */
   @PostMapping("/roles")
   @Operation(summary = "Create role", description = "Create a new role")
   public BaseResponse<Role> createRole(@RequestBody Role role) {
@@ -513,9 +485,6 @@ public class AdminController {
     return roleService.createRole(role);
   }
 
-  /**
-   * Update role
-   */
   @PutMapping("/roles/{id}")
   @Operation(summary = "Update role", description = "Update role information")
   public BaseResponse<Role> updateRole(
@@ -528,9 +497,6 @@ public class AdminController {
     return roleService.updateRole(role);
   }
 
-  /**
-   * Delete role
-   */
   @DeleteMapping("/roles/{id}")
   @Operation(summary = "Delete role", description = "Delete role by ID")
   public BaseResponse<Boolean> deleteRole(
