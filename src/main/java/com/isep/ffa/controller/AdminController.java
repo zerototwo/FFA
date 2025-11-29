@@ -60,19 +60,27 @@ public class AdminController {
   // ==================== PERSON MANAGEMENT ====================
 
   /**
-   * Get all persons with pagination
+   * Get all persons with pagination AND role filtering
    */
   @GetMapping("/persons")
-  @Operation(summary = "Get all persons", description = "Retrieve paginated list of all persons")
+  @Operation(summary = "Get all persons", description = "Retrieve paginated list of persons, optionally filtered by role")
   public BaseResponse<PagedResponse<Person>> getAllPersons(
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+          @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+          @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+          @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
+
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
-    PagedResponse<Person> persons = personService.getPage(page + 1, size);
-    return BaseResponse.success("Persons retrieved successfully", persons);
+
+    if (roleId != null && roleId > 0) {
+      return personService.getPersonsByRole(roleId, page + 1, size);
+    } else {
+      return personService.getAllPersonsEnriched(page + 1, size);
+    }
   }
+
+
 
   /**
    * Get person by ID
@@ -134,16 +142,22 @@ public class AdminController {
   /**
    * Search persons
    */
+  /**
+   * Search persons
+   */
   @GetMapping("/persons/search")
-  @Operation(summary = "Search persons", description = "Search persons by keyword")
+  @Operation(summary = "Search persons", description = "Search persons by keyword with optional role filter")
   public BaseResponse<PagedResponse<Person>> searchPersons(
-      @Parameter(description = "Search keyword") @RequestParam String keyword,
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+          @Parameter(description = "Search keyword") @RequestParam String keyword,
+          @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+          @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+          @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
+
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
-    return personService.searchPersons(keyword, page + 1, size);
+
+    return personService.searchPersons(keyword, page + 1, size, roleId);
   }
 
   // ==================== COUNTRY MANAGEMENT ====================
@@ -290,9 +304,64 @@ public class AdminController {
   }
 
   /**
+   * Search projects
+   */
+  @GetMapping("/projects/search")
+  @Operation(summary = "Search projects", description = "Search projects by keyword")
+  public BaseResponse<PagedResponse<Project>> searchProjects(
+      @Parameter(description = "Search keyword") @RequestParam String keyword,
+      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    return projectService.searchByDescription(keyword, page, size);
+  }
+
+  /**
+   * Create new project
+   */
+  @PostMapping("/projects")
+  @Operation(summary = "Create project", description = "Create a new project")
+  public BaseResponse<Project> createProject(@RequestBody Project project) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    return projectService.createProject(project);
+  }
+
+  /**
+   * Update project
+   */
+  @PutMapping("/projects/{id}")
+  @Operation(summary = "Update project", description = "Update project information")
+  public BaseResponse<Project> updateProject(
+      @Parameter(description = "Project ID") @PathVariable Long id,
+      @RequestBody Project project) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    project.setId(id);
+    return projectService.updateProject(project);
+  }
+
+  /**
+   * Delete project
+   */
+  @DeleteMapping("/projects/{id}")
+  @Operation(summary = "Delete project", description = "Delete project by ID")
+  public BaseResponse<Boolean> deleteProject(
+      @Parameter(description = "Project ID") @PathVariable Long id) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    return projectService.deleteProject(id);
+  }
+
+  /**
    * Get project by ID
    */
-  @GetMapping("/projects/{id}")
+  @GetMapping("/projects/{id:\\d+}")
   @Operation(summary = "Get project by ID", description = "Retrieve project information by ID")
   public BaseResponse<Project> getProjectById(
       @Parameter(description = "Project ID") @PathVariable Long id) {
