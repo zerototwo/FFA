@@ -81,24 +81,32 @@ public class AdminController {
   /**
    * Get all persons with pagination and optional role filter
    */
+// [AdminController.java]
+
+
+  /**
+   * Get all persons with pagination AND role filtering
+   */
   @GetMapping("/persons")
   @Operation(summary = "Get all persons", description = "Retrieve paginated list of all persons, optionally filtered by role")
   public BaseResponse<PagedResponse<Person>> getAllPersons(
-          @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-          @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
-          @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
-
+      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+      @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
+    
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
 
-    if (roleId != null && roleId > 0) {
-      return personService.getPersonsByRole(roleId, page + 1, size);
+    if (roleId != null) {
+        return personService.getPersonsByRole(roleId, page + 1, size);
     }
 
     PagedResponse<Person> persons = personService.getPage(page + 1, size);
     return BaseResponse.success("Persons retrieved successfully", persons);
   }
+
+}
 
 
   /**
