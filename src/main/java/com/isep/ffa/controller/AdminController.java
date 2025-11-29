@@ -106,7 +106,6 @@ public class AdminController {
     return BaseResponse.success("Persons retrieved successfully", persons);
   }
 
-}
 
 
   /**
