@@ -1,7 +1,6 @@
 package com.isep.ffa.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
 import com.isep.ffa.entity.Person;
@@ -16,7 +15,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,47 +34,6 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    /**
-     * Helper method to populate the Role object for a Person
-     * This resolves the "No Role" display issue in frontend
-     */
-    private void enrichPerson(Person person) {
-        if (person == null) {
-            return;
-        }
-
-        // Manually fetch and set Role if roleId is present
-        if (person.getRoleId() != null) {
-            Role role = roleMapper.selectById(person.getRoleId());
-            person.setRole(role);
-        }
-
-        // Ensure isDeleted is not null
-        if (person.getIsDeleted() == null) {
-            person.setIsDeleted(false);
-        }
-    }
-
-    /**
-     * Helper method to populate Role objects for a list of Persons
-     */
-    private void enrichPersons(List<Person> persons) {
-        if (persons != null) {
-            persons.forEach(this::enrichPerson);
-        }
-    }
-
-    /**
-     * Helper method to handle role mapping before save/update
-     * Maps nested role.id (from frontend) to person.roleId (database field)
-     */
-    private void handleRoleMapping(Person person) {
-        // If frontend sends nested role object { id: 1 }, map it to roleId field
-        if (person.getRole() != null && person.getRole().getId() != null) {
-            person.setRoleId(person.getRole().getId());
-        }
-    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -103,31 +60,19 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         return Optional.empty();
     }
 
-    @Override
-    public PagedResponse<Person> getPage(int page, int size) {
-        Page<Person> pageReq = new Page<>(page, size);
-        // Order by ID descending to see newest users first
-        Page<Person> result = page(pageReq, new QueryWrapper<Person>().orderByDesc("id"));
-
-        // Critical fix: Manually populate roles for the list
-        enrichPersons(result.getRecords());
-
-        return PagedResponse.of(
-                result.getRecords(),
-                (int) result.getCurrent() - 1,
-                (int) result.getSize(),
-                result.getTotal(),
-                (int) result.getPages()
-        );
-    }
-
-    @Override
-    public BaseResponse<Person> getById(Long id) {
-        Person person = super.getById(id);
-        if (person != null) {
-            enrichPerson(person); // Populate role for single retrieval
+    private void enrichPerson(Person person) {
+        if (person == null) {
+            return;
         }
-        return BaseResponse.success("Person found", person);
+
+        if (person.getRoleId() != null) {
+            Role role = roleMapper.selectById(person.getRoleId());
+            person.setRole(role);
+        }
+
+        if (person.getIsDeleted() == null) {
+            person.setIsDeleted(false);
+        }
     }
 
     @Override
@@ -165,7 +110,7 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         if (persons == null || persons.isEmpty()) {
             return BaseResponse.success("No persons found with role ID: " + roleId, List.of());
         }
-        enrichPersons(persons);
+        persons.forEach(this::enrichPerson);
         return BaseResponse.success("Persons found", persons);
     }
 
@@ -178,7 +123,7 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         if (persons == null || persons.isEmpty()) {
             return BaseResponse.success("No persons found with city ID: " + cityId, List.of());
         }
-        enrichPersons(persons);
+        persons.forEach(this::enrichPerson);
         return BaseResponse.success("Persons found", persons);
     }
 
@@ -200,7 +145,8 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         int end = Math.min(start + safeSize, allPersons.size());
         List<Person> pagedList = start < allPersons.size() ? allPersons.subList(start, end) : List.of();
 
-        enrichPersons(pagedList);
+        // Enrich persons
+        pagedList.forEach(this::enrichPerson);
 
         int totalPages = (int) Math.ceil((double) allPersons.size() / safeSize);
         PagedResponse<Person> pagedResponse = PagedResponse.of(
@@ -231,7 +177,8 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         int end = Math.min(start + safeSize, allPersons.size());
         List<Person> pagedList = start < allPersons.size() ? allPersons.subList(start, end) : List.of();
 
-        enrichPersons(pagedList);
+        // Enrich persons
+        pagedList.forEach(this::enrichPerson);
 
         int totalPages = (int) Math.ceil((double) allPersons.size() / safeSize);
         PagedResponse<Person> pagedResponse = PagedResponse.of(
@@ -246,40 +193,44 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
 
     @Override
     public BaseResponse<PagedResponse<Person>> searchPersons(String keyword, int page, int size) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return BaseResponse.error("Search keyword is required", 400);
+        }
         int safePage = Math.max(page, 1);
         int safeSize = size <= 0 ? 10 : size;
 
-        Page<Person> pageReq = new Page<>(safePage, safeSize);
+        // Use MyBatis-Plus QueryWrapper for search
         QueryWrapper<Person> queryWrapper = new QueryWrapper<>();
+        String searchKeyword = "%" + keyword.trim() + "%";
+        queryWrapper.and(wrapper -> wrapper
+                        .like("first_name", searchKeyword)
+                        .or()
+                        .like("last_name", searchKeyword)
+                        .or()
+                        .like("email", searchKeyword)
+                        .or()
+                        .like("login", searchKeyword))
+                .eq("is_deleted", false);
 
-        if (StringUtils.hasText(keyword)) {
-            String searchKeyword = "%" + keyword.trim() + "%";
-            queryWrapper.and(wrapper -> wrapper
-                    .like("first_name", searchKeyword)
-                    .or()
-                    .like("last_name", searchKeyword)
-                    .or()
-                    .like("email", searchKeyword)
-                    .or()
-                    .like("login", searchKeyword)
-            );
-        }
-        
-        // Ensure not deleted
-        queryWrapper.eq("is_deleted", false);
+        // Get total count
+        long total = count(queryWrapper);
 
-        Page<Person> result = page(pageReq, queryWrapper);
+        // Apply pagination
+        queryWrapper.last("LIMIT " + safeSize + " OFFSET " + ((safePage - 1) * safeSize));
+        List<Person> persons = list(queryWrapper);
 
-        // Critical fix: Enrich search results with roles
-        enrichPersons(result.getRecords());
+        // Enrich persons
+        persons.forEach(this::enrichPerson);
 
-        return BaseResponse.success("Persons found", PagedResponse.of(
-                result.getRecords(),
-                (int) result.getCurrent() - 1,
-                (int) result.getSize(),
-                result.getTotal(),
-                (int) result.getPages()
-        ));
+        int totalPages = (int) Math.ceil((double) total / safeSize);
+        PagedResponse<Person> pagedResponse = PagedResponse.of(
+                persons,
+                safePage - 1,
+                safeSize,
+                total,
+                totalPages);
+
+        return BaseResponse.success("Persons found", pagedResponse);
     }
 
     @Override
@@ -287,9 +238,6 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         if (person == null) {
             return BaseResponse.error("Invalid user data provided", 400);
         }
-
-        // Critical fix: Handle role mapping from frontend input
-        handleRoleMapping(person);
 
         // Check duplicate login
         if (person.getLogin() != null && personMapper.findByLogin(person.getLogin()) != null) {
@@ -301,15 +249,18 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
             return BaseResponse.error("Email already in use", 409);
         }
 
-        // Assign default role if still not provided
+        // Assign default role if not provided
         if (person.getRoleId() == null) {
             Role defaultRole = roleMapper.selectOne(
                     new QueryWrapper<Role>().eq("name", Constants.ROLE_USER));
-            if (defaultRole != null) {
-                person.setRoleId(defaultRole.getId());
-            } else {
-                // Fallback or error if default role not found
+            if (defaultRole == null) {
+                return BaseResponse.error("Default role USER is not configured", 500);
             }
+            person.setRoleId(defaultRole.getId());
+            person.setRole(defaultRole);
+        } else {
+            Role role = roleMapper.selectById(person.getRoleId());
+            person.setRole(role);
         }
 
         person.setIsDeleted(false);
@@ -342,18 +293,14 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
     @Override
     public BaseResponse<Person> updatePerson(Person person) {
         if (person == null || person.getId() == null) {
-            return BaseResponse.error("ID required for update", 400);
+            return BaseResponse.error("Invalid user data provided", 400);
         }
-        
-        // Critical fix: Ensure roleId is updated from input
-        handleRoleMapping(person);
 
         Person existing = personMapper.selectById(person.getId());
         if (existing == null) {
             return BaseResponse.error("User not found", 404);
         }
 
-        // Handle password update: only update if new password provided
         if (person.getPassword() != null && !person.getPassword().isBlank()) {
             person.setPassword(passwordEncoder.encode(person.getPassword()));
         } else {
@@ -365,17 +312,18 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
             return BaseResponse.error("Failed to update user", 500);
         }
 
-        // Re-fetch to return complete updated object with relations
-        Person updatedPerson = personMapper.selectById(person.getId());
-        enrichPerson(updatedPerson);
-        
-        return BaseResponse.success("User updated successfully", updatedPerson);
+        enrichPerson(person);
+        return BaseResponse.success("User updated successfully", person);
     }
 
     @Override
     public BaseResponse<Boolean> deletePerson(Long id) {
         if (id == null) {
             return BaseResponse.error("Person ID is required", 400);
+        }
+        Person person = getById(id);
+        if (person == null || Boolean.TRUE.equals(person.getIsDeleted())) {
+            return BaseResponse.error("Person not found with ID: " + id, 404);
         }
         boolean deleted = removeById(id);
         if (!deleted) {
@@ -389,15 +337,23 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         if (id == null) {
             return BaseResponse.error("Person ID is required", 400);
         }
-        boolean restored = lambdaUpdate()
-                .eq(Person::getId, id)
-                .set(Person::getIsDeleted, false)
-                .update();
-                
-        if (!restored) {
-            return BaseResponse.error("Failed to activate person or person not found", 500);
+        Person person = getById(id);
+        if (person == null) {
+            return BaseResponse.error("Person not found with ID: " + id, 404);
         }
-        return BaseResponse.success("Person activated successfully", true);
+        // If person is deleted, restore them (activate)
+        if (Boolean.TRUE.equals(person.getIsDeleted())) {
+            boolean restored = lambdaUpdate()
+                    .eq(Person::getId, id)
+                    .set(Person::getIsDeleted, false)
+                    .update();
+            if (!restored) {
+                return BaseResponse.error("Failed to activate person", 500);
+            }
+            return BaseResponse.success("Person activated successfully", true);
+        }
+        // Person is already active
+        return BaseResponse.success("Person is already active", true);
     }
 
     @Override
@@ -405,11 +361,15 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
         if (id == null) {
             return BaseResponse.error("Person ID is required", 400);
         }
+        Person person = getById(id);
+        if (person == null || Boolean.TRUE.equals(person.getIsDeleted())) {
+            return BaseResponse.error("Person not found with ID: " + id, 404);
+        }
+        // Deactivate by setting is_deleted to true
         boolean deactivated = lambdaUpdate()
                 .eq(Person::getId, id)
                 .set(Person::getIsDeleted, true)
                 .update();
-                
         if (!deactivated) {
             return BaseResponse.error("Failed to deactivate person", 500);
         }
