@@ -192,46 +192,46 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
     }
 
     @Override
-    public BaseResponse<PagedResponse<Person>> searchPersons(String keyword, int page, int size) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return BaseResponse.error("Search keyword is required", 400);
-        }
+    public BaseResponse<PagedResponse<Person>> searchPersons(String keyword, int page, int size, Long roleId) {
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+
         int safePage = Math.max(page, 1);
         int safeSize = size <= 0 ? 10 : size;
 
-        // Use MyBatis-Plus QueryWrapper for search
         QueryWrapper<Person> queryWrapper = new QueryWrapper<>();
-        String searchKeyword = "%" + keyword.trim() + "%";
-        queryWrapper.and(wrapper -> wrapper
-                        .like("first_name", searchKeyword)
-                        .or()
-                        .like("last_name", searchKeyword)
-                        .or()
-                        .like("email", searchKeyword)
-                        .or()
-                        .like("login", searchKeyword))
-                .eq("is_deleted", false);
 
-        // Get total count
+        if (hasKeyword) {
+            String searchKeyword = "%" + keyword.trim() + "%";
+            queryWrapper.and(wrapper -> wrapper
+                    .like("first_name", searchKeyword)
+                    .or()
+                    .like("last_name", searchKeyword)
+                    .or()
+                    .like("email", searchKeyword)
+                    .or()
+                    .like("login", searchKeyword));
+        }
+
+        if (roleId != null) {
+            queryWrapper.eq("role_id", roleId);
+        }
+
+        queryWrapper.eq("is_deleted", false);
+
         long total = count(queryWrapper);
-
-        // Apply pagination
         queryWrapper.last("LIMIT " + safeSize + " OFFSET " + ((safePage - 1) * safeSize));
+
         List<Person> persons = list(queryWrapper);
 
-        // Enrich persons
         persons.forEach(this::enrichPerson);
 
         int totalPages = (int) Math.ceil((double) total / safeSize);
         PagedResponse<Person> pagedResponse = PagedResponse.of(
-                persons,
-                safePage - 1,
-                safeSize,
-                total,
-                totalPages);
+                persons, safePage - 1, safeSize, total, totalPages);
 
         return BaseResponse.success("Persons found", pagedResponse);
     }
+
 
     @Override
     public BaseResponse<Person> createPerson(Person person) {
@@ -374,5 +374,31 @@ public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> imp
             return BaseResponse.error("Failed to deactivate person", 500);
         }
         return BaseResponse.success("Person deactivated successfully", true);
+    }
+
+    @Override
+    public BaseResponse<PagedResponse<Person>> getAllPersonsEnriched(int page, int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = size <= 0 ? 10 : size;
+
+        QueryWrapper<Person> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("is_deleted", false);
+
+        long total = count(queryWrapper);
+
+        queryWrapper.last("LIMIT " + safeSize + " OFFSET " + ((safePage - 1) * safeSize));
+        List<Person> persons = list(queryWrapper);
+
+        if (persons != null) {
+            persons.forEach(this::enrichPerson);
+        } else {
+            persons = List.of();
+        }
+
+        int totalPages = (int) Math.ceil((double) total / safeSize);
+        PagedResponse<Person> pagedResponse = PagedResponse.of(
+                persons, safePage - 1, safeSize, total, totalPages);
+
+        return BaseResponse.success("Persons retrieved successfully", pagedResponse);
     }
 }
