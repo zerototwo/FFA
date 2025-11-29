@@ -347,7 +347,7 @@ public class AdminController {
   /**
    * Get project by ID
    */
-  @GetMapping("/projects/{id}")
+  @GetMapping("/projects/{id:\\d+}")
   @Operation(summary = "Get project by ID", description = "Retrieve project information by ID")
   public BaseResponse<Project> getProjectById(
       @Parameter(description = "Project ID") @PathVariable Long id) {
