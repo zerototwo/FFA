@@ -60,50 +60,24 @@ public class AdminController {
   // ==================== PERSON MANAGEMENT ====================
 
   /**
-   * Get all persons with pagination
-   */
-  /**
-   * Get all persons with pagination
-   */
-//  @GetMapping("/persons")
-//  @Operation(summary = "Get all persons", description = "Retrieve paginated list of all persons")
-//  public BaseResponse<PagedResponse<Person>> getAllPersons(
-//      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-//      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-//    if (!checkAdmin()) {
-//      return BaseResponse.error("Admin access required", 403);
-//    }
-//    PagedResponse<Person> persons = personService.getPage(page + 1, size);
-//    return BaseResponse.success("Persons retrieved successfully", persons);
-//  }
-
-
-  /**
-   * Get all persons with pagination and optional role filter
-   */
-// [AdminController.java]
-
-
-  /**
    * Get all persons with pagination AND role filtering
    */
   @GetMapping("/persons")
-  @Operation(summary = "Get all persons", description = "Retrieve paginated list of all persons, optionally filtered by role")
+  @Operation(summary = "Get all persons", description = "Retrieve paginated list of persons, optionally filtered by role")
   public BaseResponse<PagedResponse<Person>> getAllPersons(
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
-      @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
-    
+          @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+          @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+          @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
+
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
 
-    if (roleId != null) {
-        return personService.getPersonsByRole(roleId, page + 1, size);
+    if (roleId != null && roleId > 0) {
+      return personService.getPersonsByRole(roleId, page + 1, size);
+    } else {
+      return personService.getAllPersonsEnriched(page + 1, size);
     }
-
-    PagedResponse<Person> persons = personService.getPage(page + 1, size);
-    return BaseResponse.success("Persons retrieved successfully", persons);
   }
 
 
@@ -168,16 +142,22 @@ public class AdminController {
   /**
    * Search persons
    */
+  /**
+   * Search persons
+   */
   @GetMapping("/persons/search")
-  @Operation(summary = "Search persons", description = "Search persons by keyword")
+  @Operation(summary = "Search persons", description = "Search persons by keyword with optional role filter")
   public BaseResponse<PagedResponse<Person>> searchPersons(
-      @Parameter(description = "Search keyword") @RequestParam String keyword,
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+          @Parameter(description = "Search keyword") @RequestParam String keyword,
+          @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+          @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+          @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
+
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
-    return personService.searchPersons(keyword, page + 1, size);
+
+    return personService.searchPersons(keyword, page + 1, size, roleId);
   }
 
   // ==================== COUNTRY MANAGEMENT ====================
