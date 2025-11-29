@@ -62,17 +62,44 @@ public class AdminController {
   /**
    * Get all persons with pagination
    */
+  /**
+   * Get all persons with pagination
+   */
+//  @GetMapping("/persons")
+//  @Operation(summary = "Get all persons", description = "Retrieve paginated list of all persons")
+//  public BaseResponse<PagedResponse<Person>> getAllPersons(
+//      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+//      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+//    if (!checkAdmin()) {
+//      return BaseResponse.error("Admin access required", 403);
+//    }
+//    PagedResponse<Person> persons = personService.getPage(page + 1, size);
+//    return BaseResponse.success("Persons retrieved successfully", persons);
+//  }
+
+
+  /**
+   * Get all persons with pagination and optional role filter
+   */
   @GetMapping("/persons")
-  @Operation(summary = "Get all persons", description = "Retrieve paginated list of all persons")
+  @Operation(summary = "Get all persons", description = "Retrieve paginated list of all persons, optionally filtered by role")
   public BaseResponse<PagedResponse<Person>> getAllPersons(
-      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+          @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+          @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+          @Parameter(description = "Role ID filter") @RequestParam(required = false) Long roleId) {
+
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
+
+    if (roleId != null && roleId > 0) {
+      return personService.getPersonsByRole(roleId, page + 1, size);
+    }
+
     PagedResponse<Person> persons = personService.getPage(page + 1, size);
     return BaseResponse.success("Persons retrieved successfully", persons);
   }
+
 
   /**
    * Get person by ID
