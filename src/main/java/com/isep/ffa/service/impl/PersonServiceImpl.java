@@ -4,343 +4,415 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.isep.ffa.dto.BaseResponse;
 import com.isep.ffa.dto.PagedResponse;
-import com.isep.ffa.entity.City;
-import com.isep.ffa.entity.Project;
-import com.isep.ffa.mapper.ProjectMapper;
-import com.isep.ffa.service.CityService;
-import com.isep.ffa.service.ProjectService;
+import com.isep.ffa.entity.Person;
+import com.isep.ffa.entity.Role;
+import com.isep.ffa.mapper.PersonMapper;
+import com.isep.ffa.mapper.RoleMapper;
+import com.isep.ffa.security.CustomUserDetailsService;
+import com.isep.ffa.service.PersonService;
+import com.isep.ffa.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
+import java.util.Optional;
 
 /**
- * Project Service Implementation
- * Implements business logic for project management
+ * Person Service Implementation
+ * Implements business logic for person management
  */
 @Service
-public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> implements ProjectService {
+public class PersonServiceImpl extends BaseServiceImpl<PersonMapper, Person> implements PersonService {
 
-  private final ProjectMapper projectMapper;
+    @Autowired
+    private PersonMapper personMapper;
 
-  @Autowired
-  private CityService cityService;
+    @Autowired
+    private RoleMapper roleMapper;
 
-  public ProjectServiceImpl(ProjectMapper projectMapper) {
-    this.projectMapper = projectMapper;
-  }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-  private int normalizePage(int page) {
-    return Math.max(page, 0);
-  }
+    /**
+     * Helper method to populate the Role object for a Person
+     * This resolves the "No Role" display issue in frontend
+     */
+    private void enrichPerson(Person person) {
+        if (person == null) {
+            return;
+        }
 
-  private int normalizeSize(int size) {
-    return size <= 0 ? 10 : size;
-  }
+        // Manually fetch and set Role if roleId is present
+        if (person.getRoleId() != null) {
+            Role role = roleMapper.selectById(person.getRoleId());
+            person.setRole(role);
+        }
 
-  private PagedResponse<Project> toPagedResponse(Page<Project> pageResult) {
-    int zeroBasedPage = (int) pageResult.getCurrent() - 1;
-    zeroBasedPage = Math.max(zeroBasedPage, 0);
-    return PagedResponse.of(
-        pageResult.getRecords(),
-        zeroBasedPage,
-        (int) pageResult.getSize(),
-        pageResult.getTotal(),
-        (int) pageResult.getPages());
-  }
+        // Ensure isDeleted is not null
+        if (person.getIsDeleted() == null) {
+            person.setIsDeleted(false);
+        }
+    }
 
-  @Override
-  public BaseResponse<Project> findByName(String name) {
-    if (StringUtils.isBlank(name)) {
-      return BaseResponse.error("Project name must not be blank", 400);
+    /**
+     * Helper method to populate Role objects for a list of Persons
+     */
+    private void enrichPersons(List<Person> persons) {
+        if (persons != null) {
+            persons.forEach(this::enrichPerson);
+        }
     }
-    Project project = projectMapper.findByName(name.trim());
-    if (project == null) {
-      return BaseResponse.error("Project not found with name: " + name, 404);
-    }
-    return BaseResponse.success("Project found", project);
-  }
 
-  @Override
-  public BaseResponse<List<Project>> findByIntervenerId(Long intervenerId) {
-    if (intervenerId == null) {
-      return BaseResponse.error("Intervener ID is required", 400);
+    /**
+     * Helper method to handle role mapping before save/update
+     * Maps nested role.id (from frontend) to person.roleId (database field)
+     */
+    private void handleRoleMapping(Person person) {
+        // If frontend sends nested role object { id: 1 }, map it to roleId field
+        if (person.getRole() != null && person.getRole().getId() != null) {
+            person.setRoleId(person.getRole().getId());
+        }
     }
-    List<Project> projects = projectMapper.findByIntervenerId(intervenerId);
-    return BaseResponse.success("Projects retrieved successfully", projects);
-  }
 
-  @Override
-  public BaseResponse<List<Project>> findByWinnerUserId(Long winnerUserId) {
-    if (winnerUserId == null) {
-      return BaseResponse.error("Winner user ID is required", 400);
-    }
-    List<Project> projects = projectMapper.findByWinnerUserId(winnerUserId);
-    return BaseResponse.success("Projects retrieved successfully", projects);
-  }
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Person person = findByLoginOrEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-  @Override
-  public BaseResponse<List<Project>> findBySubmissionDateRange(LocalDate startDate, LocalDate endDate) {
-    if (startDate == null || endDate == null) {
-      return BaseResponse.error("Start date and end date are required", 400);
+        return new CustomUserDetailsService.CustomUserPrincipal(person);
     }
-    if (endDate.isBefore(startDate)) {
-      return BaseResponse.error("End date must not be before start date", 400);
-    }
-    List<Project> projects = lambdaQuery()
-        .between(Project::getSubmissionDate, startDate, endDate)
-        .list();
-    return BaseResponse.success("Projects retrieved successfully", projects);
-  }
 
-  @Override
-  public BaseResponse<PagedResponse<Project>> searchByDescription(String keyword, int page, int size) {
-    int safePage = normalizePage(page);
-    int safeSize = normalizeSize(size);
-    QueryWrapper<Project> wrapper = new QueryWrapper<>();
-    if (StringUtils.isNotBlank(keyword)) {
-      wrapper.like("description", keyword.trim());
-    }
-    Page<Project> pageRequest = new Page<>(safePage + 1L, safeSize);
-    Page<Project> result = page(pageRequest, wrapper);
-    return BaseResponse.success("Projects retrieved successfully", toPagedResponse(result));
-  }
+    @Override
+    public Optional<Person> findByLoginOrEmail(String loginOrEmail) {
+        Person personByLogin = personMapper.findByLogin(loginOrEmail);
+        if (personByLogin != null) {
+            enrichPerson(personByLogin);
+            return Optional.of(personByLogin);
+        }
 
-  @Override
-  public BaseResponse<PagedResponse<Project>> getProjectsByIntervener(Long intervenerId, int page, int size) {
-    if (intervenerId == null) {
-      return BaseResponse.error("Intervener ID is required", 400);
-    }
-    int safePage = normalizePage(page);
-    int safeSize = normalizeSize(size);
-    Page<Project> pageRequest = new Page<>(safePage + 1L, safeSize);
-    QueryWrapper<Project> wrapper = new QueryWrapper<>();
-    wrapper.eq("intervener_id", intervenerId);
-    Page<Project> result = page(pageRequest, wrapper);
-    return BaseResponse.success("Projects retrieved successfully", toPagedResponse(result));
-  }
+        Person personByEmail = personMapper.findByEmail(loginOrEmail);
+        if (personByEmail != null) {
+            enrichPerson(personByEmail);
+            return Optional.of(personByEmail);
+        }
 
-  @Override
-  public BaseResponse<PagedResponse<Project>> getAvailableProjects(int page, int size) {
-    int safePage = normalizePage(page);
-    int safeSize = normalizeSize(size);
-    Page<Project> pageRequest = new Page<>(safePage + 1L, safeSize);
-    Page<Project> result = page(pageRequest);
-    return BaseResponse.success("Projects retrieved successfully", toPagedResponse(result));
-  }
+        return Optional.empty();
+    }
 
-  @Override
-  public BaseResponse<Project> createProject(Project project) {
-    if (project == null || StringUtils.isBlank(project.getName())) {
-      return BaseResponse.error("Project name is required", 400);
-    }
-    boolean created = save(project);
-    if (!created) {
-      return BaseResponse.error("Failed to create project");
-    }
-    return BaseResponse.success("Project created successfully", project);
-  }
+    @Override
+    public PagedResponse<Person> getPage(int page, int size) {
+        Page<Person> pageReq = new Page<>(page, size);
+        // Order by ID descending to see newest users first
+        Page<Person> result = page(pageReq, new QueryWrapper<Person>().orderByDesc("id"));
 
-  @Override
-  public BaseResponse<Project> updateProject(Project project) {
-    if (project == null || project.getId() == null) {
-      return BaseResponse.error("Project ID is required for update", 400);
-    }
-    Project existing = getById(project.getId());
-    if (existing == null || Boolean.TRUE.equals(existing.getIsDeleted())) {
-      return BaseResponse.error("Project not found with ID: " + project.getId(), 404);
-    }
-    boolean updated = lambdaUpdate()
-        .eq(Project::getId, project.getId())
-        .set(StringUtils.isNotBlank(project.getName()), Project::getName, project.getName())
-        .set(StringUtils.isNotBlank(project.getDescription()), Project::getDescription, project.getDescription())
-        .set(project.getSubmissionDate() != null, Project::getSubmissionDate, project.getSubmissionDate())
-        .set(project.getIntervenerId() != null, Project::getIntervenerId, project.getIntervenerId())
-        .set(project.getWinnerUserId() != null, Project::getWinnerUserId, project.getWinnerUserId())
-        .update();
-    if (!updated) {
-      return BaseResponse.error("Failed to update project");
-    }
-    Project refreshed = getById(project.getId());
-    return BaseResponse.success("Project updated successfully", refreshed);
-  }
+        // Critical fix: Manually populate roles for the list
+        enrichPersons(result.getRecords());
 
-  @Override
-  public BaseResponse<Boolean> deleteProject(Long id) {
-    if (id == null) {
-      return BaseResponse.error("Project ID is required", 400);
+        return PagedResponse.of(
+                result.getRecords(),
+                (int) result.getCurrent() - 1,
+                (int) result.getSize(),
+                result.getTotal(),
+                (int) result.getPages()
+        );
     }
-    Project existing = getById(id);
-    if (existing == null || Boolean.TRUE.equals(existing.getIsDeleted())) {
-      return BaseResponse.error("Project not found with ID: " + id, 404);
-    }
-    boolean deleted = removeById(id);
-    if (!deleted) {
-      return BaseResponse.error("Failed to delete project");
-    }
-    return BaseResponse.success("Project deleted successfully", true);
-  }
 
-  @Override
-  public BaseResponse<Boolean> defineWinner(Long projectId, Long winnerUserId) {
-    if (projectId == null || winnerUserId == null) {
-      return BaseResponse.error("Project ID and winner user ID are required", 400);
+    @Override
+    public BaseResponse<Person> getById(Long id) {
+        Person person = super.getById(id);
+        if (person != null) {
+            enrichPerson(person); // Populate role for single retrieval
+        }
+        return BaseResponse.success("Person found", person);
     }
-    Project existing = getById(projectId);
-    if (existing == null || Boolean.TRUE.equals(existing.getIsDeleted())) {
-      return BaseResponse.error("Project not found with ID: " + projectId, 404);
-    }
-    boolean updated = lambdaUpdate()
-        .eq(Project::getId, projectId)
-        .set(Project::getWinnerUserId, winnerUserId)
-        .update();
-    if (!updated) {
-      return BaseResponse.error("Failed to define project winner");
-    }
-    return BaseResponse.success("Project winner defined successfully", true);
-  }
 
-  @Override
-  public BaseResponse<Project> getProjectWithDetails(Long id) {
-    if (id == null) {
-      return BaseResponse.error("Project ID is required", 400);
+    @Override
+    public BaseResponse<Person> findByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return BaseResponse.error("Email is required", 400);
+        }
+        Person person = personMapper.findByEmail(email.trim());
+        if (person == null) {
+            return BaseResponse.error("Person not found with email: " + email, 404);
+        }
+        enrichPerson(person);
+        return BaseResponse.success("Person found", person);
     }
-    Project project = getById(id);
-    if (project == null || Boolean.TRUE.equals(project.getIsDeleted())) {
-      return BaseResponse.error("Project not found with ID: " + id, 404);
-    }
-    // Load location city information if available
-    if (project.getLocationId() != null) {
-      City city = cityService.getById(project.getLocationId());
-      if (city != null) {
-        project.setLocation(city);
-      }
-    }
-    // Set default status if null
-    if (project.getStatus() == null) {
-      project.setStatus("DRAFT");
-    }
-    return BaseResponse.success("Project retrieved successfully", project);
-  }
 
-  @Override
-  public BaseResponse<Object> getProjectStatistics(Long projectId) {
-    if (projectId == null) {
-      return BaseResponse.error("Project ID is required", 400);
+    @Override
+    public BaseResponse<Person> findByLogin(String login) {
+        if (login == null || login.trim().isEmpty()) {
+            return BaseResponse.error("Login is required", 400);
+        }
+        Person person = personMapper.findByLogin(login.trim());
+        if (person == null) {
+            return BaseResponse.error("Person not found with login: " + login, 404);
+        }
+        enrichPerson(person);
+        return BaseResponse.success("Person found", person);
     }
-    Project project = getById(projectId);
-    if (project == null || Boolean.TRUE.equals(project.getIsDeleted())) {
-      return BaseResponse.error("Project not found with ID: " + projectId, 404);
-    }
-    Map<String, Object> stats = Map.of(
-        "projectId", projectId,
-        "hasWinner", project.getWinnerUserId() != null,
-        "submissionDate", project.getSubmissionDate(),
-        "lastUpdated", project.getLastModificationDate());
-    return BaseResponse.success("Project statistics retrieved successfully", stats);
-  }
 
-  @Override
-  public Long countByIntervenerId(Long intervenerId) {
-    if (intervenerId == null) {
-      return 0L;
+    @Override
+    public BaseResponse<List<Person>> findByRoleId(Long roleId) {
+        if (roleId == null) {
+            return BaseResponse.error("Role ID is required", 400);
+        }
+        List<Person> persons = personMapper.findByRoleId(roleId);
+        if (persons == null || persons.isEmpty()) {
+            return BaseResponse.success("No persons found with role ID: " + roleId, List.of());
+        }
+        enrichPersons(persons);
+        return BaseResponse.success("Persons found", persons);
     }
-    return projectMapper.countByIntervenerId(intervenerId);
-  }
 
-  @Override
-  public Long countByIntervenerIdThisMonth(Long intervenerId) {
-    if (intervenerId == null) {
-      return 0L;
+    @Override
+    public BaseResponse<List<Person>> findByCityId(Long cityId) {
+        if (cityId == null) {
+            return BaseResponse.error("City ID is required", 400);
+        }
+        List<Person> persons = personMapper.findByCityId(cityId);
+        if (persons == null || persons.isEmpty()) {
+            return BaseResponse.success("No persons found with city ID: " + cityId, List.of());
+        }
+        enrichPersons(persons);
+        return BaseResponse.success("Persons found", persons);
     }
-    return projectMapper.countByIntervenerIdThisMonth(intervenerId);
-  }
 
-  @Override
-  public Long countPendingApprovalsByIntervenerId(Long intervenerId) {
-    if (intervenerId == null) {
-      return 0L;
-    }
-    return projectMapper.countPendingApprovalsByIntervenerId(intervenerId);
-  }
+    @Override
+    public BaseResponse<PagedResponse<Person>> getPersonsByRole(Long roleId, int page, int size) {
+        if (roleId == null) {
+            return BaseResponse.error("Role ID is required", 400);
+        }
+        int safePage = Math.max(page, 1);
+        int safeSize = size <= 0 ? 10 : size;
 
-  @Override
-  public BaseResponse<PagedResponse<Project>> getProjectsByIntervenerAndStatus(Long intervenerId, String status, int page, int size) {
-    if (intervenerId == null) {
-      return BaseResponse.error("Intervener ID is required", 400);
-    }
-    if (StringUtils.isBlank(status)) {
-      return BaseResponse.error("Status is required", 400);
-    }
-    // Validate status
-    if (!status.equals("DRAFT") && !status.equals("PENDING_APPROVAL") && !status.equals("PUBLISHED")) {
-      return BaseResponse.error("Invalid status. Must be DRAFT, PENDING_APPROVAL, or PUBLISHED", 400);
-    }
-    int safePage = normalizePage(page);
-    int safeSize = normalizeSize(size);
-    
-    List<Project> allProjects = projectMapper.findByIntervenerIdAndStatus(intervenerId, status);
-    
-    // Manual pagination
-    int start = (safePage - 1) * safeSize;
-    int end = Math.min(start + safeSize, allProjects.size());
-    List<Project> pagedList = start < allProjects.size() ? allProjects.subList(start, end) : List.of();
-    
-    int totalPages = (int) Math.ceil((double) allProjects.size() / safeSize);
-    PagedResponse<Project> pagedResponse = PagedResponse.of(
-        pagedList,
-        safePage - 1,
-        safeSize,
-        allProjects.size(),
-        totalPages);
-    
-    return BaseResponse.success("Projects retrieved successfully", pagedResponse);
-  }
+        List<Person> allPersons = personMapper.findByRoleId(roleId);
+        if (allPersons == null) {
+            allPersons = List.of();
+        }
 
-  @Override
-  public Long getApplicationCount(Long projectId) {
-    if (projectId == null) {
-      return 0L;
-    }
-    return projectMapper.countApplicationsByProjectId(projectId);
-  }
+        // Manual pagination
+        int start = (safePage - 1) * safeSize;
+        int end = Math.min(start + safeSize, allPersons.size());
+        List<Person> pagedList = start < allPersons.size() ? allPersons.subList(start, end) : List.of();
 
-  @Override
-  public BaseResponse<Boolean> changeProjectStatus(Long projectId, String newStatus) {
-    if (projectId == null) {
-      return BaseResponse.error("Project ID is required", 400);
+        enrichPersons(pagedList);
+
+        int totalPages = (int) Math.ceil((double) allPersons.size() / safeSize);
+        PagedResponse<Person> pagedResponse = PagedResponse.of(
+                pagedList,
+                safePage - 1,
+                safeSize,
+                allPersons.size(),
+                totalPages);
+
+        return BaseResponse.success("Persons retrieved successfully", pagedResponse);
     }
-    if (StringUtils.isBlank(newStatus)) {
-      return BaseResponse.error("New status is required", 400);
+
+    @Override
+    public BaseResponse<PagedResponse<Person>> getPersonsByCity(Long cityId, int page, int size) {
+        if (cityId == null) {
+            return BaseResponse.error("City ID is required", 400);
+        }
+        int safePage = Math.max(page, 1);
+        int safeSize = size <= 0 ? 10 : size;
+
+        List<Person> allPersons = personMapper.findByCityId(cityId);
+        if (allPersons == null) {
+            allPersons = List.of();
+        }
+
+        // Manual pagination
+        int start = (safePage - 1) * safeSize;
+        int end = Math.min(start + safeSize, allPersons.size());
+        List<Person> pagedList = start < allPersons.size() ? allPersons.subList(start, end) : List.of();
+
+        enrichPersons(pagedList);
+
+        int totalPages = (int) Math.ceil((double) allPersons.size() / safeSize);
+        PagedResponse<Person> pagedResponse = PagedResponse.of(
+                pagedList,
+                safePage - 1,
+                safeSize,
+                allPersons.size(),
+                totalPages);
+
+        return BaseResponse.success("Persons retrieved successfully", pagedResponse);
     }
-    // Validate status
-    if (!newStatus.equals("DRAFT") && !newStatus.equals("PENDING_APPROVAL") && !newStatus.equals("PUBLISHED")) {
-      return BaseResponse.error("Invalid status. Must be DRAFT, PENDING_APPROVAL, or PUBLISHED", 400);
+
+    @Override
+    public BaseResponse<PagedResponse<Person>> searchPersons(String keyword, int page, int size) {
+        int safePage = Math.max(page, 1);
+        int safeSize = size <= 0 ? 10 : size;
+
+        Page<Person> pageReq = new Page<>(safePage, safeSize);
+        QueryWrapper<Person> queryWrapper = new QueryWrapper<>();
+
+        if (StringUtils.hasText(keyword)) {
+            String searchKeyword = "%" + keyword.trim() + "%";
+            queryWrapper.and(wrapper -> wrapper
+                    .like("first_name", searchKeyword)
+                    .or()
+                    .like("last_name", searchKeyword)
+                    .or()
+                    .like("email", searchKeyword)
+                    .or()
+                    .like("login", searchKeyword)
+            );
+        }
+        
+        // Ensure not deleted
+        queryWrapper.eq("is_deleted", false);
+
+        Page<Person> result = page(pageReq, queryWrapper);
+
+        // Critical fix: Enrich search results with roles
+        enrichPersons(result.getRecords());
+
+        return BaseResponse.success("Persons found", PagedResponse.of(
+                result.getRecords(),
+                (int) result.getCurrent() - 1,
+                (int) result.getSize(),
+                result.getTotal(),
+                (int) result.getPages()
+        ));
     }
-    Project project = getById(projectId);
-    if (project == null || Boolean.TRUE.equals(project.getIsDeleted())) {
-      return BaseResponse.error("Project not found with ID: " + projectId, 404);
+
+    @Override
+    public BaseResponse<Person> createPerson(Person person) {
+        if (person == null) {
+            return BaseResponse.error("Invalid user data provided", 400);
+        }
+
+        // Critical fix: Handle role mapping from frontend input
+        handleRoleMapping(person);
+
+        // Check duplicate login
+        if (person.getLogin() != null && personMapper.findByLogin(person.getLogin()) != null) {
+            return BaseResponse.error("Login already in use", 409);
+        }
+
+        // Check duplicate email
+        if (person.getEmail() != null && personMapper.findByEmail(person.getEmail()) != null) {
+            return BaseResponse.error("Email already in use", 409);
+        }
+
+        // Assign default role if still not provided
+        if (person.getRoleId() == null) {
+            Role defaultRole = roleMapper.selectOne(
+                    new QueryWrapper<Role>().eq("name", Constants.ROLE_USER));
+            if (defaultRole != null) {
+                person.setRoleId(defaultRole.getId());
+            } else {
+                // Fallback or error if default role not found
+            }
+        }
+
+        person.setIsDeleted(false);
+
+        if (person.getPassword() != null) {
+            person.setPassword(passwordEncoder.encode(person.getPassword()));
+        }
+
+        // Normalise organisation information
+        if (person.getOrganizationType() == null) {
+            if (person.getOrganizationId() != null) {
+                person.setOrganizationType("EMBASSY");
+            } else if (person.getOrganizationName() != null && !person.getOrganizationName().isBlank()) {
+                person.setOrganizationType("OTHER");
+            }
+        }
+        if (person.getOrganizationName() != null && person.getOrganizationName().isBlank()) {
+            person.setOrganizationName(null);
+        }
+
+        boolean saved = save(person);
+        if (!saved) {
+            return BaseResponse.error("Failed to create user", 500);
+        }
+
+        enrichPerson(person);
+        return BaseResponse.success("User registered successfully", person);
     }
-    String currentStatus = project.getStatus();
-    if (currentStatus == null) {
-      currentStatus = "DRAFT";
+
+    @Override
+    public BaseResponse<Person> updatePerson(Person person) {
+        if (person == null || person.getId() == null) {
+            return BaseResponse.error("ID required for update", 400);
+        }
+        
+        // Critical fix: Ensure roleId is updated from input
+        handleRoleMapping(person);
+
+        Person existing = personMapper.selectById(person.getId());
+        if (existing == null) {
+            return BaseResponse.error("User not found", 404);
+        }
+
+        // Handle password update: only update if new password provided
+        if (person.getPassword() != null && !person.getPassword().isBlank()) {
+            person.setPassword(passwordEncoder.encode(person.getPassword()));
+        } else {
+            person.setPassword(existing.getPassword());
+        }
+
+        boolean updated = updateById(person);
+        if (!updated) {
+            return BaseResponse.error("Failed to update user", 500);
+        }
+
+        // Re-fetch to return complete updated object with relations
+        Person updatedPerson = personMapper.selectById(person.getId());
+        enrichPerson(updatedPerson);
+        
+        return BaseResponse.success("User updated successfully", updatedPerson);
     }
-    // Validate status transition
-    if (currentStatus.equals("PUBLISHED") && !newStatus.equals("PUBLISHED")) {
-      return BaseResponse.error("Cannot change status of a published project", 400);
+
+    @Override
+    public BaseResponse<Boolean> deletePerson(Long id) {
+        if (id == null) {
+            return BaseResponse.error("Person ID is required", 400);
+        }
+        boolean deleted = removeById(id);
+        if (!deleted) {
+            return BaseResponse.error("Failed to delete person", 500);
+        }
+        return BaseResponse.success("Person deleted successfully", true);
     }
-    // Update status
-    boolean updated = lambdaUpdate()
-        .eq(Project::getId, projectId)
-        .set(Project::getStatus, newStatus)
-        .update();
-    if (!updated) {
-      return BaseResponse.error("Failed to change project status", 500);
+
+    @Override
+    public BaseResponse<Boolean> activatePerson(Long id) {
+        if (id == null) {
+            return BaseResponse.error("Person ID is required", 400);
+        }
+        boolean restored = lambdaUpdate()
+                .eq(Person::getId, id)
+                .set(Person::getIsDeleted, false)
+                .update();
+                
+        if (!restored) {
+            return BaseResponse.error("Failed to activate person or person not found", 500);
+        }
+        return BaseResponse.success("Person activated successfully", true);
     }
-    return BaseResponse.success("Project status changed successfully", true);
-  }
+
+    @Override
+    public BaseResponse<Boolean> deactivatePerson(Long id) {
+        if (id == null) {
+            return BaseResponse.error("Person ID is required", 400);
+        }
+        boolean deactivated = lambdaUpdate()
+                .eq(Person::getId, id)
+                .set(Person::getIsDeleted, true)
+                .update();
+                
+        if (!deactivated) {
+            return BaseResponse.error("Failed to deactivate person", 500);
+        }
+        return BaseResponse.success("Person deactivated successfully", true);
+    }
 }
