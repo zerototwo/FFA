@@ -7,6 +7,9 @@ import com.isep.ffa.entity.*;
 import com.isep.ffa.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -107,10 +110,19 @@ public class UserController {
    * Submit application to project (simple version - for backward compatibility)
    */
   @PostMapping("/projects/{projectId}/apply")
-  @Operation(summary = "Apply to project", description = "Submit application to a project (simple version)")
+  @Operation(summary = "Apply to project", description = "Submit application to a project. " +
+      "Required: projectId and motivation (a text explaining why you want to apply for this project). " +
+      "The userId will be automatically set to the current logged-in user.", security = @SecurityRequirement(name = "bearer-jwt"))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Application submitted successfully"),
+      @ApiResponse(responseCode = "401", description = "User not authenticated"),
+      @ApiResponse(responseCode = "404", description = "Project not found"),
+      @ApiResponse(responseCode = "400", description = "Invalid request or application already exists"),
+      @ApiResponse(responseCode = "500", description = "Unexpected error")
+  })
   public BaseResponse<Application> applyToProject(
       @Parameter(description = "Project ID") @PathVariable Long projectId,
-      @Parameter(description = "Motivation letter") @RequestParam String motivation) {
+      @Parameter(description = "Motivation text - Explain why you want to apply for this project and what you can contribute") @RequestParam String motivation) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
     if (currentUserId == null) {
       return BaseResponse.error("User not authenticated", 401);
