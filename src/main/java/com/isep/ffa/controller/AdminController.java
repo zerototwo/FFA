@@ -290,6 +290,61 @@ public class AdminController {
   }
 
   /**
+   * Search projects
+   */
+  @GetMapping("/projects/search")
+  @Operation(summary = "Search projects", description = "Search projects by keyword")
+  public BaseResponse<PagedResponse<Project>> searchProjects(
+      @Parameter(description = "Search keyword") @RequestParam String keyword,
+      @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+      @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    return projectService.searchByDescription(keyword, page, size);
+  }
+
+  /**
+   * Create new project
+   */
+  @PostMapping("/projects")
+  @Operation(summary = "Create project", description = "Create a new project")
+  public BaseResponse<Project> createProject(@RequestBody Project project) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    return projectService.createProject(project);
+  }
+
+  /**
+   * Update project
+   */
+  @PutMapping("/projects/{id}")
+  @Operation(summary = "Update project", description = "Update project information")
+  public BaseResponse<Project> updateProject(
+      @Parameter(description = "Project ID") @PathVariable Long id,
+      @RequestBody Project project) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    project.setId(id);
+    return projectService.updateProject(project);
+  }
+
+  /**
+   * Delete project
+   */
+  @DeleteMapping("/projects/{id}")
+  @Operation(summary = "Delete project", description = "Delete project by ID")
+  public BaseResponse<Boolean> deleteProject(
+      @Parameter(description = "Project ID") @PathVariable Long id) {
+    if (!checkAdmin()) {
+      return BaseResponse.error("Admin access required", 403);
+    }
+    return projectService.deleteProject(id);
+  }
+
+  /**
    * Get project by ID
    */
   @GetMapping("/projects/{id}")
