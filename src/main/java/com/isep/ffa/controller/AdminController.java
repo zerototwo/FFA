@@ -428,7 +428,7 @@ public class AdminController {
     if (!checkAdmin()) {
       return BaseResponse.error("Admin access required", 403);
     }
-    PagedResponse<City> cities = cityService.getPage(page + 1, size);
+    PagedResponse<City> cities = cityService.getPage(page, size);
     return BaseResponse.success("Cities retrieved successfully", cities);
   }
 
