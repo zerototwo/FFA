@@ -194,18 +194,20 @@ public class ProjectServiceImpl extends BaseServiceImpl<ProjectMapper, Project> 
     if (existing == null || Boolean.TRUE.equals(existing.getIsDeleted())) {
       return BaseResponse.error("Project not found with ID: " + project.getId(), 404);
     }
+
     boolean updated = lambdaUpdate()
-        .eq(Project::getId, project.getId())
-        .set(StringUtils.isNotBlank(project.getName()), Project::getName, project.getName())
-        .set(StringUtils.isNotBlank(project.getDescription()), Project::getDescription, project.getDescription())
-        .set(project.getSubmissionDate() != null, Project::getSubmissionDate, project.getSubmissionDate())
-        .set(project.getStartDate() != null, Project::getStartDate, project.getStartDate())
-        .set(project.getTotalBudget() != null, Project::getTotalBudget, project.getTotalBudget())
-        .set(project.getLocationId() != null, Project::getLocationId, project.getLocationId())
-        .set(project.getIntervenerId() != null, Project::getIntervenerId, project.getIntervenerId())
-        .set(project.getWinnerUserId() != null, Project::getWinnerUserId, project.getWinnerUserId())
-        // Preserve status - don't update it through this method
-        .update();
+            .eq(Project::getId, project.getId())
+            .set(StringUtils.isNotBlank(project.getName()), Project::getName, project.getName())
+            .set(StringUtils.isNotBlank(project.getDescription()), Project::getDescription, project.getDescription())
+            .set(project.getSubmissionDate() != null, Project::getSubmissionDate, project.getSubmissionDate())
+            .set(project.getStartDate() != null, Project::getStartDate, project.getStartDate())
+            .set(project.getTotalBudget() != null, Project::getTotalBudget, project.getTotalBudget())
+            .set(project.getLocationId() != null, Project::getLocationId, project.getLocationId())
+            .set(project.getIntervenerId() != null, Project::getIntervenerId, project.getIntervenerId())
+            .set(project.getWinnerUserId() != null, Project::getWinnerUserId, project.getWinnerUserId())
+            .set(StringUtils.isNotBlank(project.getStatus()), Project::getStatus, project.getStatus())
+            .update();
+
     if (!updated) {
       return BaseResponse.error("Failed to update project");
     }
