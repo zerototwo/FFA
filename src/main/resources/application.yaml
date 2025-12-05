@@ -9,9 +9,9 @@ spring:
   
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://dpg-d46v8pre5dus73dkvrng-a.frankfurt-postgres.render.com:5432/ffa_pgsql?sslmode=require
-    username: ffa_pgsql_user
-    password: gFZdGDkzxhcQCfsaKfxntc9n6EuLBZWT
+    url: jdbc:postgresql://ep-polished-paper-agj3ybh6-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require
+    username: neondb_owner
+    password: npg_BbMam0r6Yxzn
     driver-class-name: org.postgresql.Driver
     # Optimize connection pool for faster startup
     hikari:
@@ -45,7 +45,8 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: none  # Disable auto DDL for faster startup (use Flyway instead)
+#      ddl-auto: none  # Disable auto DDL for faster startup (use Flyway instead)
+    ddl-auto: update
     show-sql: false  # Disable SQL logging in production to save memory
     properties:
       hibernate:
@@ -93,8 +94,8 @@ mybatis-plus:
       logic-delete-value: true
       # Logical not-delete value
       logic-not-delete-value: false
-      # Field strategy - use ignored to return all fields including null values
-      field-strategy: ignored
+      # Field strategy
+      field-strategy: not_null
       # Table name prefix
       table-prefix: ""
     # Enable SQL performance analysis
@@ -121,8 +122,8 @@ app:
   api-base-urls: "http://localhost:8080/ffaAPI,https://ffa-aj0b.onrender.com/ffaAPI"
   jwt:
     secret: 6e8ce58b17be462e3a64de52b87c8e6e5c49739d75fc1472c0a35f4c1f809c3e1d57da6de197d4a8face5320cc5aa2329ee499aee127b0ee4f1ed38e350cb8c6
-    expiration: 604800000  # 7 days in milliseconds (increased from 24 hours for better user experience)
-    refresh-expiration: 2592000000  # 30 days in milliseconds (increased from 7 days)
+    expiration: 86400000  # 24 hours in milliseconds
+    refresh-expiration: 604800000  # 7 days in milliseconds
   file:
     upload-dir: uploads
     max-size: 10485760  # 10MB in bytes
@@ -130,7 +131,7 @@ app:
 
 # Server Configuration
 server:
-  port: ${PORT:8080}
+  port: ${PORT:8088}
   servlet:
     context-path: /ffaAPI
     # Optimize server for faster startup
@@ -167,10 +168,6 @@ springdoc:
     try-it-out-enabled: false
     # Lazy load Swagger UI for faster startup
     enabled: true
-    # Enable token persistence in browser localStorage
-    # This will save the authorization token in browser's localStorage
-    # so you don't need to re-enter it after page refresh or app restart
-    persist-authorization: true
   show-actuator: true
   # Cache API docs for faster startup
   cache:
@@ -197,6 +194,11 @@ logging:
     org.springframework.web.servlet.handler.HandlerMappingIntrospector: ERROR
     # Enable error logging for exception handlers
     com.isep.ffa.controller.GlobalExceptionHandler: DEBUG
+
+# JWT Configuration
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+  expiration: 86400000 # 24 hours in milliseconds
 
 # Actuator Configuration (optimize for faster startup)
 management:
