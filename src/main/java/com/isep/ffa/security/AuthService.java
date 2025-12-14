@@ -7,9 +7,15 @@ import com.isep.ffa.entity.Person;
 import com.isep.ffa.service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -30,14 +36,57 @@ public class AuthService {
   @Autowired
   private PersonService personService;
 
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
   /**
    * Authenticate user with login credentials
    */
   public BaseResponse<AuthTokensResponse> authenticateUser(String login, String password) {
     try {
+      // Validate input
+      if (login == null || login.trim().isEmpty()) {
+        return BaseResponse.error("Login is required", 400);
+      }
+      if (password == null || password.isEmpty()) {
+        return BaseResponse.error("Password is required", 400);
+      }
+
+      // Check if user exists first (for better error messages)
+      Optional<Person> personOpt = personService.findByLoginOrEmail(login.trim());
+      if (personOpt.isEmpty()) {
+        return BaseResponse.error("Invalid login credentials: User not found", 401);
+      }
+
+      Person person = personOpt.get();
+
+      // Check if account is deleted/disabled
+      if (person.getIsDeleted() != null && person.getIsDeleted()) {
+        return BaseResponse.error("Account is disabled", 403);
+      }
+
+      // Check if password is set
+      if (person.getPassword() == null || person.getPassword().trim().isEmpty()) {
+        return BaseResponse.error("Account password is not set. Please reset your password.", 401);
+      }
+
+      // Check if password is in BCrypt format (starts with $2a$, $2b$, or $2y$)
+      String storedPassword = person.getPassword();
+      if (!storedPassword.startsWith("$2a$") && !storedPassword.startsWith("$2b$")
+          && !storedPassword.startsWith("$2y$")) {
+        return BaseResponse.error(
+            "Password format is invalid. Please reset your password through registration or password reset.", 401);
+      }
+
+      // Debug: Log password format info (without exposing actual password)
+      System.out.println("DEBUG: Attempting authentication for user: " + login.trim());
+      System.out.println("DEBUG: Stored password format: "
+          + storedPassword.substring(0, Math.min(10, storedPassword.length())) + "...");
+      System.out.println("DEBUG: Input password length: " + password.length());
+
       // Authenticate user
       Authentication authentication = authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(login, password));
+          new UsernamePasswordAuthenticationToken(login.trim(), password));
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -48,19 +97,112 @@ public class AuthService {
       // Get user details
       CustomUserDetailsService.CustomUserPrincipal userPrincipal = (CustomUserDetailsService.CustomUserPrincipal) authentication
           .getPrincipal();
-      Person person = userPrincipal.getPerson();
+      Person authenticatedPerson = userPrincipal.getPerson();
 
       AuthTokensResponse response = AuthTokensResponse.builder()
           .accessToken(jwt)
           .refreshToken(refreshToken)
           .tokenType("Bearer")
           .expiresIn(604800) // 7 days in seconds (updated to match new expiration)
-          .user(person)
+          .user(authenticatedPerson)
           .build();
 
       return BaseResponse.success("Login successful", response);
 
+    } catch (BadCredentialsException e) {
+      // Password mismatch - log for debugging
+      System.err.println("=== BadCredentialsException ===");
+      System.err.println("Error: " + e.getMessage());
+      System.err.println("Login: " + (login != null ? login.trim() : "null"));
+      System.err.println("Possible causes:");
+      System.err.println("  1. Password does not match the stored BCrypt hash");
+      System.err.println("  2. Password was encoded with a different BCrypt strength");
+      System.err.println("  3. Password contains special characters that were not properly encoded");
+      System.err.println("=================================");
+
+      // Try to provide helpful suggestions and manual password test
+      Optional<Person> personOpt = personService.findByLoginOrEmail(login != null ? login.trim() : "");
+      if (personOpt.isPresent()) {
+        Person person = personOpt.get();
+        String storedPwd = person.getPassword();
+        if (storedPwd != null) {
+          System.err.println("Stored password format: " +
+              (storedPwd.length() > 10 ? storedPwd.substring(0, 10) + "..." : storedPwd) +
+              " (length: " + storedPwd.length() + ")");
+
+          // Print full encrypted password for debugging
+          System.err.println("=== Full BCrypt Hash (for debugging) ===");
+          System.err.println("Encrypted password: " + storedPwd);
+          System.err.println("=========================================");
+
+          // Generate and print encrypted password for the input password
+          try {
+            String encryptedInputPassword = passwordEncoder.encode(password);
+            System.err.println();
+            System.err.println("=== Encrypted Password for Input Password ===");
+            System.err.println("Input password: " + password);
+            System.err.println("Encrypted (BCrypt): " + encryptedInputPassword);
+            System.err.println("==============================================");
+            System.err.println();
+            System.err.println("=== SQL Update Statement (Copy and Execute) ===");
+            System.err.println("UPDATE person SET password = '" + encryptedInputPassword +
+                "' WHERE email = '" + (login != null ? login.trim() : "") + "';");
+            System.err.println("================================================");
+            System.err.println();
+          } catch (Exception ex) {
+            System.err.println("Error generating encrypted password: " + ex.getMessage());
+          }
+
+          // Manual password matching test
+          try {
+            boolean matches = passwordEncoder.matches(password, storedPwd);
+            System.err.println("Manual password match test: " + (matches ? "MATCH" : "NO MATCH"));
+            if (!matches) {
+              System.err.println("The password you entered does not match the stored BCrypt hash.");
+            }
+          } catch (Exception ex) {
+            System.err.println("Error during manual password test: " + ex.getMessage());
+          }
+        }
+      } else {
+        // Even if user not found, generate encrypted password for reference
+        try {
+          String encryptedInputPassword = passwordEncoder.encode(password);
+          System.err.println();
+          System.err.println("=== Encrypted Password for Input Password ===");
+          System.err.println("Input password: " + password);
+          System.err.println("Encrypted (BCrypt): " + encryptedInputPassword);
+          System.err.println("==============================================");
+        } catch (Exception ex) {
+          System.err.println("Error generating encrypted password: " + ex.getMessage());
+        }
+      }
+
+      return BaseResponse
+          .error(
+              "Invalid login credentials: Incorrect password. The password does not match the stored hash. Please re-register or reset your password.",
+              401);
+    } catch (UsernameNotFoundException e) {
+      // User not found - log for debugging
+      System.err.println("UsernameNotFoundException: " + e.getMessage());
+      return BaseResponse.error("Invalid login credentials: User not found", 401);
+    } catch (DisabledException e) {
+      // Account disabled
+      System.err.println("DisabledException: " + e.getMessage());
+      return BaseResponse.error("Account is disabled", 403);
+    } catch (LockedException e) {
+      // Account locked
+      System.err.println("LockedException: " + e.getMessage());
+      return BaseResponse.error("Account is locked", 403);
+    } catch (AuthenticationException e) {
+      // Other authentication exceptions
+      System.err.println("AuthenticationException: " + e.getClass().getName() + " - " + e.getMessage());
+      e.printStackTrace();
+      return BaseResponse.error("Authentication failed: " + e.getMessage(), 401);
     } catch (Exception e) {
+      // Log the full exception for debugging
+      System.err.println("Unexpected error during authentication: " + e.getClass().getName() + " - " + e.getMessage());
+      e.printStackTrace();
       return BaseResponse.error("Authentication failed: " + e.getMessage(), 401);
     }
   }

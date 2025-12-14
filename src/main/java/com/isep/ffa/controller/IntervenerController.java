@@ -334,7 +334,13 @@ public class IntervenerController {
    * Get project details
    */
   @GetMapping("/projects/{id}")
-  @Operation(summary = "Get project details", description = "Get detailed information about my project including application count")
+  @Operation(summary = "Get project details", description = "Get detailed information about my project including application count", security = @SecurityRequirement(name = "bearer-jwt"))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Project details retrieved successfully"),
+      @ApiResponse(responseCode = "401", description = "User not authenticated"),
+      @ApiResponse(responseCode = "404", description = "Project not found"),
+      @ApiResponse(responseCode = "403", description = "Access denied")
+  })
   public BaseResponse<Project> getProjectDetails(
       @Parameter(description = "Project ID") @PathVariable Long id) {
     Long currentUserId = SecurityUtils.getCurrentUserId();
